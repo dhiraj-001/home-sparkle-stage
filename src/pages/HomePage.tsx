@@ -9,12 +9,12 @@ import Footer from "@/components/Footer";
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col lg:-mx-36">
       <Header />
       <main className="flex-1">
         <Hero />
         <ServiceGrid />
-        <Stats />
+        {/* <Stats /> */}
         <ApplianceCarousel />
         <PromoGrid />
         <HowItWorks />

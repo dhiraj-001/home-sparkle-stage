@@ -1,0 +1,3 @@
+- [x] Create src/components/SplashScreen.tsx with logo and animated progress bar
+- [x] Edit src/App.tsx to add loading state and conditionally render SplashScreen or main app
+- [ ] Test the animation by running the development server
