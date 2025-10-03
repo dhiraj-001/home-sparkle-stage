@@ -39,9 +39,9 @@ const Header = () => {
             <Button variant="ghost" size="icon" className="hidden sm:flex">
               <ShoppingCart className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Link to="/register">
               <User className="w-5 h-5" />
-            </Button>
+            </Link>
           </div>
         </div>
       </div>
