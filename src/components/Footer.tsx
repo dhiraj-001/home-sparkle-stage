@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Twitter, Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
+import SocialMediaLinks from "./ui/SocialMediLinks";
 
 const Footer = () => {
   return (
@@ -50,44 +51,7 @@ const Footer = () => {
           </div>
 
           {/* Social Links */}
-          <div>
-            <h4 className="font-bold mb-4">Social links</h4>
-            <div className="flex gap-3 mb-6">
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
-                <Linkedin className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
-                <Youtube className="w-5 h-5" />
-              </a>
-            </div>
-
-            {/* App Download */}
-            <div className="space-y-2">
-              <a href="#" className="block">
-                <img 
-                  src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
-                  alt="Download on App Store" 
-                  className="h-10"
-                />
-              </a>
-              <a href="#" className="block">
-                <img 
-                  src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" 
-                  alt="Get it on Google Play" 
-                  className="h-12 -ml-1"
-                />
-              </a>
-            </div>
-          </div>
+          <SocialMediaLinks/>
         </div>
 
         {/* Bottom Bar */}
