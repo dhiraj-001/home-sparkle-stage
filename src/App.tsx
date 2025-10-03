@@ -8,7 +8,8 @@ import HomePage from "./pages/HomePage";
 import ServicePage from "./pages/ServicePage";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
-import Register from "./components/Registration";
+import Register from "./pages/AuthPages/Registration";
+import Login from "./pages/AuthPages/Login";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/service/:serviceName" element={<ServicePage />} />
             <Route path="/register" element={<Register/>} />
+            <Route path="/login" element={<Login/>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
