@@ -286,7 +286,7 @@ const TrendingServices = () => {
           <div className="text-center mt-16">
             <Link
               to="/services"
-              className="inline-flex items-center gap-3 px-10 py-4 text-gray-900 rounded-2xl font-bold hover:text-blue-600 transition-all duration-300 transform hover:scale-105 group border-2 border-gray-900 hover:border-blue-600"
+              className="inline-flex items-center gap-3 px-10 py-4 text-gray-900 rounded-2xl font-bold hover:text-blue-600 transition-all duration-300 transform hover:scale-105 group"
             >
               View All Services
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
