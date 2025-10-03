@@ -6,6 +6,7 @@ import ApplianceCarousel from "@/components/ApplianceCarousel";
 import PromoGrid from "@/components/PromoGrid";
 import HowItWorks from "@/components/HowItWorks";
 import Footer from "@/components/Footer";
+import BannersPage from "@/components/Banners";
 
 const HomePage = () => {
   return (
@@ -15,6 +16,7 @@ const HomePage = () => {
         <Hero />
         <ServiceGrid />
         {/* <Stats /> */}
+        <BannersPage/>
         <ApplianceCarousel />
         <PromoGrid />
         <HowItWorks />
