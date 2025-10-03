@@ -99,6 +99,14 @@ const ServiceGrid = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Track window width for responsive card display
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     async function fetchCategories(offset = 1, limit = 20) {
@@ -183,8 +191,14 @@ const ServiceGrid = () => {
     serviceRefs.current[index] = el;
   };
 
-  // Get categories to display based on showAll state
-  const displayedCategories = showAll ? categories : categories.slice(0, 8);
+  // Get categories to display based on screen size
+  const getDisplayCount = () => {
+    if (windowWidth < 768) return 3; // Mobile: 3 cards
+    if (windowWidth < 1024) return 4; // Tablet: 4 cards
+    return 8; // Laptop+: 8 cards
+  };
+
+  const displayedCategories = showAll ? categories : categories.slice(0, getDisplayCount());
 
   if (loading) {
     return (
