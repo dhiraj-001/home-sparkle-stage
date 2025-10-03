@@ -207,13 +207,13 @@ const ServiceGrid = () => {
   }
 
   return (
-    <section ref={sectionRef} className="py-16 bg-background">
-      <div className="container mx-auto px-4">
+    <section ref={sectionRef} className="py-12 md:py-20 bg-background">
+      <div className="container mx-auto px-4 md:px-6">
         {/* Header with left-aligned heading and right-aligned button */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 md:mb-12 gap-4">
           <h2
             ref={headingRef}
-            className="text-3xl md:text-4xl font-bold text-gray-900 opacity-0 translate-y-8 transition-all duration-700 ease-out"
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground opacity-0 translate-y-8 transition-all duration-700 ease-out"
           >
             What are you looking for?
           </h2>
@@ -221,70 +221,66 @@ const ServiceGrid = () => {
           {/* See All Categories Button - Right aligned */}
           <Link 
             to="/service/services" 
-            className="text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+            className="text-primary hover:text-primary/80 font-semibold flex items-center gap-1 transition-colors group"
           >
-            See all <ChevronRight className="w-4 h-4" />
+            See all <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
         {categories.length === 0 ? (
-          <div className="text-center text-gray-500 text-lg">
+          <div className="text-center text-muted-foreground text-lg py-12">
             No categories available at the moment.
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-6 md:gap-8">
-              {displayedCategories.map((category, index) => (
-                <Link
-                  ref={(el) => addServiceRef(el, index)}
-                  key={category.id}
-                  to={`/service/${category.id}`}
-                  className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 border border-gray-100 opacity-0 translate-y-8 scale-95"
-                >
-                  {/* Card Content */}
-                  <div className="relative h-48 overflow-hidden">
-                    {/* Background Image or Gradient */}
-                    {category.image_full_path ? (
-                      <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                        style={{
-                          backgroundImage: `url(${category.image_full_path})`,
-                        }}
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20" />
-                    )}
-                    
-                    {/* Overlay */}
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-all duration-300" />
-                    
-                    {/* Icon Badge */}
-                    <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <DynamicIcon
-                        categoryName={category.name}
-                        className="w-6 h-6 text-blue-600"
-                      />
-                    </div>
-
-                    {/* Category Name - Bottom Left */}
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <div className="backdrop-blur-md bg-white/90 rounded-xl p-3 shadow-lg border border-white/50">
-                        <h3 className="text-sm font-semibold text-gray-900 text-center line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
-                          {category.name}
-                        </h3>
-                      </div>
-                    </div>
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+            {displayedCategories.map((category, index) => (
+              <Link
+                ref={(el) => addServiceRef(el, index)}
+                key={category.id}
+                to={`/service/${category.id}`}
+                className="group relative bg-card rounded-xl md:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-border/50 hover:border-primary/30 opacity-0 translate-y-8 scale-95"
+              >
+                {/* Card Content */}
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  {/* Background Image or Gradient */}
+                  {category.image_full_path ? (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                      style={{
+                        backgroundImage: `url(${category.image_full_path})`,
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/10" />
+                  )}
+                  
+                  {/* Gradient Overlay for better text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300" />
+                  
+                  {/* Icon Badge */}
+                  <div className="absolute top-3 right-3 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background/95 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-300 ring-1 ring-border/50">
+                    <DynamicIcon
+                      categoryName={category.name}
+                      className="w-5 h-5 md:w-6 md:h-6 text-primary group-hover:text-primary transition-colors"
+                    />
                   </div>
 
-                  {/* Hover Effect */}
-                  <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-blue-500/30 transition-all duration-300" />
-                  
-                  {/* Shine Effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                </Link>
-              ))}
-            </div>
-          </>
+                  {/* Category Name - Bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
+                    <h3 className="text-sm md:text-base font-bold text-white line-clamp-2 group-hover:text-primary-foreground transition-colors duration-300 drop-shadow-lg">
+                      {category.name}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Subtle hover border glow */}
+                <div className="absolute inset-0 rounded-xl md:rounded-2xl ring-2 ring-transparent group-hover:ring-primary/20 transition-all duration-300 pointer-events-none" />
+                
+                {/* Shine Effect on hover */}
+                <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-700" />
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </section>
