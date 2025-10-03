@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import BannersPage from "@/components/Banners";
 import Banner from "@/components/Banners";
 import TestimonialSlider from "@/components/TestimoniaSlider";
-import BannerHero from "@/components/BannerHero";
+
 
 const HomePage = () => {
   return (
