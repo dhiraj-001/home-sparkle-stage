@@ -22,7 +22,7 @@ const HomePage = () => {
         <ServiceGrid />
         {/* <Stats /> */}
         <Banner/>
-        <ApplianceCarousel />
+        {/* <ApplianceCarousel /> */}
         <TrendingServices/>
         <PromoGrid />
          <AdvertisementList 

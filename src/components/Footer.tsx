@@ -143,7 +143,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-border pt-6">
           <p className="text-sm text-muted-foreground text-center">
-            © 2025 Urban Company. All rights reserved.
+            © 2025  Sarvo Club. All rights reserved.
           </p>
         </div>
       </div>

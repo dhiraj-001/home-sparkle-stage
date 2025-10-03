@@ -193,7 +193,7 @@ const TrendingServices = () => {
             <TrendingUp className="w-5 h-5" />
             Trending Now
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-black">Most Popular Services</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-black">Popular Services</h2>
           <p className="text-lg text-gray-600 max-w-2xl leading-relaxed">
             Discover our most booked and highly-rated services that customers love
           </p>
