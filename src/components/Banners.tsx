@@ -1,45 +1,17 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+"use client"
 
-interface Service {
-  id: string;
-  name: string;
-  short_description: string;
-  thumbnail_full_path: string | null;
-}
+import type React from "react"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import type { BannerItem } from "../types/banner"
 
-interface Category {
-  id: string;
-  name: string;
-  image_full_path: string | null;
-}
 
-interface Banner {
-  id: string;
-  banner_title: string;
-  resource_type: "service" | "category";
-  resource_id: string;
-  redirect_link: string | null;
-  banner_image_full_path: string;
-  service?: Service | null;
-  category?: Category | null;
-}
-
-interface ApiResponse {
-  response_code: string;
-  message: string;
-  content: {
-    current_page: number;
-    data: Banner[];
-    total: number;
-  };
-}
-
-const BannersPage = () => {
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const navigate = useNavigate();
+const Banner: React.FC = () => {
+  const navigate = useNavigate()
+  const [banners, setBanners] = useState<BannerItem[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -51,89 +23,190 @@ const BannersPage = () => {
             headers: {
               "Content-Type": "application/json",
               "Connection": "keep-alive",
-              "X-localization": "en",
-              "zoneId": "a02c55ff-cb84-4bbb-bf91-5300d1766a29", // from screenshot
-              "guest_id": "7e223db0-9f62-11f0-bba0-779e4e64bbc8", // constant guest_id
+              "zoneId": "a02c55ff-cb84-4bbb-bf91-5300d1766a29", // required
+              "X-localization": "en", // required
+              "guest_id": "7e223db0-9f62-11f0-bba0-779e4e64bbc8", // constant
               "Accept-Charset": "UTF-8",
             },
           }
-        );
-
-        const data: ApiResponse = await response.json();
-        if (data.response_code === "default_200" && data.content?.data) {
-          setBanners(data.content.data);
+        )
+        const data = await response.json()
+        if (data.response_code === "default_200" && data.content.data) {
+          setBanners(data.content.data.filter((banner: BannerItem) => banner.is_active === 1))
         }
       } catch (error) {
-        console.error("Error fetching banners:", error);
+        console.error("Failed to fetch banners:", error)
+      } finally {
+        setLoading(false)
       }
-    };
-
-    fetchBanners();
-  }, []);
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % banners.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
-  };
-
-  const handleClick = (banner: Banner) => {
-    if (banner.redirect_link) {
-      window.open(banner.redirect_link, "_blank");
-    } else if (banner.resource_type === "service" && banner.service) {
-      navigate(`/services/${banner.service.id}`);
-    } else if (banner.resource_type === "category" && banner.category) {
-      navigate(`/categories/${banner.category.id}`);
     }
-  };
 
-  if (banners.length === 0) {
-    return <div className="flex justify-center items-center h-screen">No banners available</div>;
+    fetchBanners()
+  }, [])
+
+  useEffect(() => {
+    if (!isAutoPlaying || banners.length === 0) return
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % banners.length)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [isAutoPlaying, banners.length])
+
+  const handleBannerClick = (banner: BannerItem) => {
+    if (banner.redirect_link) {
+      window.location.href = banner.redirect_link
+    } else if (banner.resource_type === "service" && banner.service) {
+      navigate(`/offer/${banner.resource_type}/${banner.resource_id}`)
+    } else if (banner.resource_type === "category" && banner.category) {
+      navigate(`/offer/${banner.resource_type}/${banner.resource_id}`)
+    }
   }
 
-  const currentBanner = banners[currentIndex];
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index)
+    setIsAutoPlaying(false)
+  }
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length)
+    setIsAutoPlaying(false)
+  }
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % banners.length)
+    setIsAutoPlaying(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="relative w-full h-[500px] bg-gradient-to-br from-primary/10 via-accent/5 to-background animate-pulse">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (banners.length === 0) {
+    return (
+      <div className="relative w-full h-[500px] bg-gradient-to-br from-primary/10 via-accent/5 to-background flex items-center justify-center">
+        <p className="text-muted-foreground text-lg">No banners available</p>
+      </div>
+    )
+  }
+
+  const currentBanner = banners[currentIndex]
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Promotional Banners</h1>
+    <div className="relative w-full h-[500px] lg:h-[600px] overflow-hidden group">
+      <div
+        className="flex transition-transform duration-700 ease-out h-full"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      >
+        {banners.map((banner) => (
+          <div key={banner.id} className="min-w-full h-full relative">
+            <img
+              src={banner.banner_image_full_path || "/placeholder.svg"}
+              alt={banner.banner_title}
+              className="w-full h-full object-cover"
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent"></div>
 
-      <div className="relative w-full max-w-3xl mx-auto">
-        <img
-          src={currentBanner.banner_image_full_path}
-          alt={currentBanner.banner_title}
-          className="w-full h-64 object-cover rounded-xl shadow-lg cursor-pointer"
-          onClick={() => handleClick(currentBanner)}
-        />
+            {/* Content overlay */}
+            <div className="absolute inset-0 flex items-center">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                <div className="max-w-2xl space-y-6">
+                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
+                    {banner.banner_title}
+                  </h2>
 
-        {/* Title Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-3 rounded-b-xl">
-          <h2 className="text-lg font-semibold">{currentBanner.banner_title}</h2>
-          {currentBanner.resource_type === "service" && currentBanner.service && (
-            <p className="text-sm">{currentBanner.service.short_description}</p>
-          )}
-          {currentBanner.resource_type === "category" && currentBanner.category && (
-            <p className="text-sm">{currentBanner.category.name}</p>
-          )}
-        </div>
+                  {banner.resource_type === "service" && banner.service && (
+                    <>
+                      <p className="text-lg sm:text-xl text-white/90 leading-relaxed">
+                        {banner.service.short_description}
+                      </p>
+                      <div className="flex items-center gap-4 text-white/80">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <span className="font-medium">{banner.service.avg_rating || "New"}</span>
+                        </div>
+                        <span className="text-2xl font-bold">₹{banner.service.min_bidding_price}</span>
+                      </div>
+                    </>
+                  )}
 
-        {/* Navigation Arrows */}
-        <button
-          onClick={handlePrev}
-          className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <button
-          onClick={handleNext}
-          className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
-        >
-          <ChevronRight size={20} />
-        </button>
+                  {banner.resource_type === "category" && banner.category && (
+                    <p className="text-lg sm:text-xl text-white/90 leading-relaxed">
+                      Explore our {banner.category.name} services
+                    </p>
+                  )}
+
+                  <button
+                    onClick={() => handleBannerClick(banner)}
+                    className="group/btn inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  >
+                    <span>Explore Now</span>
+                    <svg
+                      className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-    </div>
-  );
-};
 
-export default BannersPage;
+      {banners.length > 1 && (
+        <>
+          <button
+            onClick={goToPrevious}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100"
+            aria-label="Previous slide"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <button
+            onClick={goToNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100"
+            aria-label="Next slide"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </>
+      )}
+
+      {banners.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`transition-all duration-300 rounded-full ${
+                index === currentIndex ? "w-8 h-2 bg-white" : "w-2 h-2 bg-white/50 hover:bg-white/75"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default Banner

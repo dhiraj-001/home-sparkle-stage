@@ -12,6 +12,7 @@ import Register from "./pages/AuthPages/Registration";
 import Login from "./pages/AuthPages/Login";
 import ProfilePage from "./pages/ProfilePage";
 import { ConfigAPI, setZoneId } from "../api.js";
+import OfferDetailPage from "./pages/OfferDetailPage.js";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/service/:serviceName" element={<ServicePage />} />
+            <Route path="/offer/:type/:id" element={<OfferDetailPage />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/profile" element={<ProfilePage />} />
