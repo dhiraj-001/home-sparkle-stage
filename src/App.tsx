@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,11 +10,31 @@ import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
 import Register from "./pages/AuthPages/Registration";
 import Login from "./pages/AuthPages/Login";
+import ProfilePage from "./pages/ProfilePage";
+import { ConfigAPI, setZoneId } from "../api.js";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await ConfigAPI.appConfig();
+        // NOTE: Based on a sample response, the zone ID is directly in the response data.
+        // Adjust if the structure is different.
+        if (res.data.zone_id) {
+          setZoneId(res.data.zone_id);
+          console.log("Zone ID set:", res.data.zone_id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch app config:", error);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   if (loading) {
     return <SplashScreen onFinish={() => setLoading(false)} />;
@@ -29,8 +49,9 @@ const App = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/service/:serviceName" element={<ServicePage />} />
-            <Route path="/register" element={<Register/>} />
-            <Route path="/login" element={<Login/>} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<ProfilePage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

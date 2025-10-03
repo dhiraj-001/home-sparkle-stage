@@ -1,8 +1,27 @@
 import { MapPin, Search, ShoppingCart, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 const Header = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("demand_token");
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const handleUserIconClick = () => {
+    if (isLoggedIn) {
+      navigate("/profile");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
       <div className="container mx-auto px-4">
@@ -39,9 +58,9 @@ const Header = () => {
             <Button variant="ghost" size="icon" className="hidden sm:flex">
               <ShoppingCart className="w-5 h-5" />
             </Button>
-            <Link to="/register">
+            <button onClick={handleUserIconClick}>
               <User className="w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>

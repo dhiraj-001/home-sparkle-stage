@@ -233,6 +233,14 @@ export const PaymentAPI = {
 };
 
 // ========================
+// Config API
+// ========================
+export const ConfigAPI = {
+  appConfig: () => api.get("/api/v1/customer/config"),
+};
+
+
+// ========================
 // Helper: Token Handling
 // ========================
 export function setAuthToken(token) {
@@ -242,6 +250,14 @@ export function setAuthToken(token) {
   } else {
     delete api.defaults.headers.common["Authorization"];
     localStorage.removeItem("demand_token");
+  }
+}
+
+export function setZoneId(zoneId) {
+  if (zoneId) {
+    api.defaults.headers.common["zoneId"] = zoneId;
+  } else {
+    delete api.defaults.headers.common["zoneId"];
   }
 }
 
