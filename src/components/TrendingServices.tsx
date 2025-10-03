@@ -301,7 +301,7 @@ const TrendingServices = () => {
         {services.length > 0 && (
           <div className="text-center mt-16">
             <Link
-              to="/service/services"
+              to="/allservices"
               className="inline-flex items-center gap-3 px-10 py-4 text-gray-900 rounded-2xl font-bold hover:text-blue-600 transition-all duration-300 transform hover:scale-105 group"
             >
               View All Services
