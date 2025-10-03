@@ -45,9 +45,14 @@ const TrendingServices = () => {
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024)
 
   useEffect(() => {
     fetchTrendingServices()
+
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   const fetchTrendingServices = async () => {
@@ -94,6 +99,18 @@ const TrendingServices = () => {
     }).format(price)
   }
 
+  const getVisibleServicesCount = () => {
+    if (windowWidth < 768) return 3 // Mobile: 3 cards
+    if (windowWidth < 1024) return 4 // Tablet: 4 cards
+    return 8 // Laptop and above: 8 cards
+  }
+
+  const getGridColumns = () => {
+    if (windowWidth < 768) return "grid-cols-1" // Mobile: 1 column
+    if (windowWidth < 1024) return "grid-cols-2" // Tablet: 2 columns
+    return "grid-cols-4" // Laptop: 4 columns
+  }
+
   if (loading) {
     return (
       <section className="relative py-20 overflow-hidden">
@@ -107,8 +124,8 @@ const TrendingServices = () => {
             <div className="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-96 mx-auto mb-3 animate-pulse" />
             <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-64 mx-auto animate-pulse" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {[...Array(8)].map((_, i) => (
+          <div className={`grid ${getGridColumns()} gap-8`}>
+            {[...Array(getVisibleServicesCount())].map((_, i) => (
               <div
                 key={i}
                 className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden animate-pulse"
@@ -182,7 +199,6 @@ const TrendingServices = () => {
           </p>
         </div>
 
-        {/* Services Grid */}
         {services.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -191,8 +207,8 @@ const TrendingServices = () => {
             <p className="text-gray-500 text-lg font-medium">No trending services available at the moment.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {services.map((service) => (
+          <div className={`grid ${getGridColumns()} gap-8`}>
+            {services.slice(0, getVisibleServicesCount()).map((service) => (
               <Link
                 key={service.id}
                 to={`/service/${service.id}`}
@@ -285,7 +301,7 @@ const TrendingServices = () => {
         {services.length > 0 && (
           <div className="text-center mt-16">
             <Link
-              to="/services"
+              to="/service/services"
               className="inline-flex items-center gap-3 px-10 py-4 text-gray-900 rounded-2xl font-bold hover:text-blue-600 transition-all duration-300 transform hover:scale-105 group"
             >
               View All Services

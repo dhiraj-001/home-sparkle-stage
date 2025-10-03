@@ -90,7 +90,7 @@ interface ApiResponse {
   };
 }
 
-const ServiceGrid = () => {
+const CategoriesGrid = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const serviceRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -238,7 +238,7 @@ const ServiceGrid = () => {
           
           {/* See All Categories Button - Right aligned */}
           <Link 
-            to="/service/services" 
+            to="/categories" 
             className="text-primary hover:text-primary/80 font-semibold flex items-center gap-1 transition-colors group"
           >
             See all <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -305,4 +305,4 @@ const ServiceGrid = () => {
   );
 };
 
-export default ServiceGrid;
+export default CategoriesGrid;

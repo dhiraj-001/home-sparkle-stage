@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Progress } from "./ui/progress";
+import logo from "../assets/logo.jpeg"
 
 const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [progress, setProgress] = useState(0);
@@ -27,7 +28,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
       <img
-        src="/placeholder.svg"
+        src={logo}
         alt="Logo"
         className="w-40 h-40 mb-8"
       />

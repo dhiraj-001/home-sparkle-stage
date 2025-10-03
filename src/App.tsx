@@ -5,14 +5,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import ServicePage from "./pages/ServicePage";
+import ServicesPage from "./pages/Category/CategoryPage.js";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
 import Register from "./pages/AuthPages/Registration";
 import Login from "./pages/AuthPages/Login";
-import ProfilePage from "./pages/ProfilePage";
 import { ConfigAPI, setZoneId } from "../api.js";
-import OfferDetailPage from "./pages/OfferDetailPage.js";
+import CategoriesPage from "./pages/Category/CategoryPage.js";
 
 const queryClient = new QueryClient();
 
@@ -49,11 +48,10 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/service/:serviceName" element={<ServicePage />} />
-            <Route path="/offer/:type/:id" element={<OfferDetailPage />} />
+            <Route path="/service/:serviceName" element={<ServicesPage />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<ProfilePage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

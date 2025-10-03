@@ -146,20 +146,7 @@ const Banner: React.FC = () => {
                     </p>
                   )}
 
-                  <button
-                    onClick={() => handleBannerClick(banner)}
-                    className="group/btn inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  >
-                    <span>Explore Now</span>
-                    <svg
-                      className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </button>
+               
                 </div>
               </div>
             </div>
@@ -181,7 +168,7 @@ const Banner: React.FC = () => {
 
           <button
             onClick={goToNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/20 backdrop-blur-sm hover:bg-black/40 rounded-full flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100"
             aria-label="Next slide"
           >
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
