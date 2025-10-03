@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import BannersPage from "@/components/Banners";
 import Banner from "@/components/Banners";
 import TestimonialSlider from "@/components/TestimoniaSlider";
+import TrendingServices from "@/components/TrendingServices";
 
 
 const HomePage = () => {
@@ -21,6 +22,7 @@ const HomePage = () => {
         {/* <Stats /> */}
         <Banner/>
         <ApplianceCarousel />
+        <TrendingServices/>
         <PromoGrid />
         <HowItWorks />
         <TestimonialSlider/>
