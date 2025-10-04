@@ -230,7 +230,7 @@ const AdvertisementList: React.FC<AdvertisementListProps> = ({ token, limit = 5,
                     </p>
 
                     {/* Additional Info */}
-                    <div className="text-xs text-white/80 mb-5 space-y-2 backdrop-blur-sm bg-white/5 rounded-lg p-3 border border-white/10">
+                    <div className="text-xs text-white mb-5 space-y-2 backdrop-blur-sm bg-white/10 rounded-lg p-3 border border-white/10">
                       <p className="flex items-center gap-2">
                         <span className="text-sm">📅</span>
                         <span className="font-medium">
@@ -247,21 +247,21 @@ const AdvertisementList: React.FC<AdvertisementListProps> = ({ token, limit = 5,
 
                     {/* Action Button */}
                     <div className="flex items-center justify-between gap-3">
-                      <Button
+                      {/* <Button
                         variant="secondary"
                         size="sm"
                         className="bg-white text-foreground hover:bg-white/90 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex-1"
                         onClick={(e) => e.preventDefault()}
                       >
                         View Details →
-                      </Button>
+                      </Button> */}
 
                       {/* Priority Indicator */}
-                      {ad.priority > 0 && (
+                      {/* {ad.priority > 0 && (
                         <span className="text-xs bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full font-semibold border border-white/30 whitespace-nowrap">
                           Priority {ad.priority}
                         </span>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </Link>
