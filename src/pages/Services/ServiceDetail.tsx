@@ -163,7 +163,7 @@ const ServiceDetail = () => {
   }
 
   const getImageUrl = (imagePath: string) => {
-    const baseUrl = "https://admin.sarvoclub.com/storage/app/public/service/"
+    const baseUrl = (import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com") + "/storage/app/public/service/"
     return imagePath ? `${baseUrl}${imagePath}` : "/customer-service-interaction.png"
   }
 

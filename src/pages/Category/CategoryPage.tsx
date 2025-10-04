@@ -38,7 +38,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     async function fetchCategories(offset = 1, limit = 100) {
-      const baseUrl = import.meta.env.VITE_API_URL;
+      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
       const url = `${baseUrl}/api/v1/customer/category?offset=${offset}&limit=${limit}`
 
       const headers = {

@@ -6,7 +6,7 @@
 export const config = {
   appName: 'Sarvo Club',
   appVersion: '3.3',
-  baseUrl: 'https://admin.sarvoclub.com',
+  baseUrl: import.meta.env?.VITE_API_URL || 'https://admin.sarvoclub.com',
   // A flag used during development to bypass a "maintenance mode" screen
   avoidMaintenanceMode: false,
 };

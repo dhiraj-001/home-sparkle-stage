@@ -13,7 +13,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react"
 import heroPainting from "@/assets/hero-ac-repair.jpg"
 import { Link, useNavigate } from "react-router-dom"
 
-const BASE_URL = "https://admin.sarvoclub.com"
+const BASE_URL = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
 
 interface LoginFormData {
   email_or_phone: string

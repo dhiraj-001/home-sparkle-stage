@@ -116,7 +116,7 @@ const AllServices = () => {
   }
 
   const getImageUrl = (service: Service) => {
-    const baseUrl = "https://admin.sarvoclub.com/storage/app/public/service/"
+    const baseUrl = (import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com") + "/storage/app/public/service/"
     return service.cover_image
       ? `${baseUrl}${service.cover_image}`
       : service.thumbnail
