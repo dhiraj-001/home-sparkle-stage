@@ -39,7 +39,7 @@ const Header = () => {
             <Button variant="ghost" size="icon" className="hidden sm:flex">
               <ShoppingCart className="w-5 h-5" />
             </Button>
-            <Link to="/register">
+            <Link to="/login">
               <User className="w-5 h-5" />
             </Link>
           </div>

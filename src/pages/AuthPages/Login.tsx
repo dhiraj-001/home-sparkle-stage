@@ -113,7 +113,7 @@ const Login: React.FC = () => {
     const token = localStorage.getItem("demand_token")
     if (token) {
       // User is already logged in, redirect to home
-      navigate("/")
+      navigate("/profile")
     }
   }, [navigate])
 

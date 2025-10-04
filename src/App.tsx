@@ -15,6 +15,7 @@ import CategoriesPage from "./pages/Category/CategoryPage.js";
 import AllServices from "./pages/Services/AllServices.js";
 import ServiceDetail from "./pages/Services/ServiceDetail.js";
 import CategoryChildList from "./pages/Category/CategoryDetail.js";
+import ProfilePage from "./pages/ProfilePage.js";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => {
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/category/:id" element={<CategoryChildList  />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<ProfilePage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
