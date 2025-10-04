@@ -1,6 +1,7 @@
 import { MapPin, Search, ShoppingCart, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import logo from "../assets/logo.jpeg"
 
 const Header = () => {
   return (
@@ -9,10 +10,12 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="bg-foreground text-background px-2 py-1 rounded font-bold text-sm">
-              UC
-            </div>
-            <span className="font-bold text-lg hidden sm:inline">Urban Company</span>
+             <img
+              src={logo}
+              alt="SarvoClub"
+              className="w-5 h-5 object-contain"
+            />
+            <span className="font-bold text-lg hidden sm:inline">SarvoClub</span>
           </Link>
 
           {/* Center Section: Location & Search */}
@@ -39,7 +42,7 @@ const Header = () => {
             <Button variant="ghost" size="icon" className="hidden sm:flex">
               <ShoppingCart className="w-5 h-5" />
             </Button>
-            <Link to="/login">
+            <Link to="/services">
               <User className="w-5 h-5" />
             </Link>
           </div>
