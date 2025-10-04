@@ -24,8 +24,47 @@ interface User {
   date_of_birth: string | null
 }
 
+interface Discount {
+  id: string
+  discount_title: string
+  discount_type: string
+  discount_amount: number
+  discount_amount_type: string
+  min_purchase: number
+  max_discount_amount: number
+  limit_per_user: number
+  start_date: string
+  end_date: string
+}
+
+interface Coupon {
+  id: string
+  coupon_type: string
+  coupon_code: string
+  discount_id: string
+  is_active: number
+  created_at: string
+  discount: Discount
+}
+
+interface CouponsData {
+  active_coupons: {
+    data: Coupon[]
+  }
+  expired_coupons: {
+    data: Coupon[]
+  }
+}
+
 const ProfilePage = () => {
   const [user, setUser] = useState<User | null>(null)
+  const [coupons, setCoupons] = useState<CouponsData | null>(null)
+  const [loadingCoupons, setLoadingCoupons] = useState(true)
+  const [activeTab, setActiveTab] = useState<"active" | "expired">("active")
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -51,7 +90,6 @@ const ProfilePage = () => {
             throw new Error("Invalid API response")
           }
         } else {
-          // Token expired or invalid
           localStorage.removeItem("demand_token")
           navigate("/login")
         }
@@ -64,6 +102,35 @@ const ProfilePage = () => {
 
     fetchUserData()
   }, [navigate])
+
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const response = await fetch("https://admin.sarvoclub.com/api/v1/customer/coupon?limit=100&offset=1", {
+          headers: {
+            "Content-Type": "application/json",
+            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+            "X-localization": "en",
+            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+            "Accept-Charset": "UTF-8",
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.response_code === "default_200" && data.content) {
+            setCoupons(data.content)
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch coupons:", error)
+      } finally {
+        setLoadingCoupons(false)
+      }
+    }
+
+    fetchCoupons()
+  }, [])
 
   const handleLogout = async () => {
     const token = localStorage.getItem("demand_token")
@@ -91,9 +158,48 @@ const ProfilePage = () => {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    const token = localStorage.getItem("demand_token")
+    if (!token) {
+      navigate("/login")
+      return
+    }
+
+    setDeleteLoading(true)
+    setDeleteError(null)
+
+    try {
+      const response = await fetch("https://admin.sarvoclub.com/api/v1/customer/remove-account", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        localStorage.removeItem("demand_token")
+        navigate("/")
+      } else {
+        const data = await response.json()
+        setDeleteError(data.message || "Failed to delete account. Please try again.")
+      }
+    } catch (error) {
+      console.error("Delete account failed:", error)
+      setDeleteError("An error occurred. Please try again later.")
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+  }
+
+  const copyCouponCode = (code: string) => {
+    navigator.clipboard.writeText(code)
+    setCopiedCode(code)
+    setTimeout(() => setCopiedCode(null), 2000)
   }
 
   if (!user) {
@@ -209,81 +315,6 @@ const ProfilePage = () => {
             )}
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Wallet Balance */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-gray-100 p-3 rounded-xl">
-                  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-blue-600 text-sm mb-1">Wallet Balance</p>
-              <p className="text-3xl font-bold text-gray-900">₹{user.wallet_balance}</p>
-            </div>
-
-            {/* Loyalty Points */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-gray-100 p-3 rounded-xl">
-                  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-blue-600 text-sm mb-1">Loyalty Points</p>
-              <p className="text-3xl font-bold text-gray-900">{user.loyalty_point}</p>
-            </div>
-
-            {/* Total Bookings */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-gray-100 p-3 rounded-xl">
-                  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-blue-600 text-sm mb-1">Total Bookings</p>
-              <p className="text-3xl font-bold text-gray-900">{user.bookings_count}</p>
-            </div>
-
-            {/* Account Status */}
-            <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-gray-100 p-3 rounded-xl">
-                  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-blue-600 text-sm mb-1">Account Status</p>
-              <p className="text-2xl font-bold text-gray-900">Active</p>
-            </div>
-          </div>
-
           {/* Verification Status */}
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 mb-8">
             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -376,7 +407,446 @@ const ProfilePage = () => {
             </button>
           </div>
         </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Wallet Balance */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm font-medium mb-1">Wallet Balance</p>
+            <p className="text-3xl font-bold text-gray-900">₹{user.wallet_balance}</p>
+          </div>
+
+          {/* Loyalty Points */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm font-medium mb-1">Loyalty Points</p>
+            <p className="text-3xl font-bold text-gray-900">{user.loyalty_point}</p>
+          </div>
+
+          {/* Bookings */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm font-medium mb-1">Total Bookings</p>
+            <p className="text-3xl font-bold text-gray-900">{user.bookings_count}</p>
+          </div>
+
+          {/* Account Status */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm font-medium mb-1">Account Status</p>
+            <p className="text-3xl font-bold text-gray-900">Active</p>
+          </div>
+        </div>
+
+        {/* Coupons Section */}
+        <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <svg className="w-7 h-7 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                />
+              </svg>
+              My Coupons
+            </h3>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab("active")}
+              className={`px-6 py-3 font-semibold transition-all relative ${
+                activeTab === "active"
+                  ? "text-gray-900 border-b-2 border-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Active Coupons
+              {coupons && coupons.active_coupons.data.length > 0 && (
+                <span className="ml-2 bg-gray-900 text-white text-xs px-2 py-0.5 rounded-full">
+                  {coupons.active_coupons.data.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("expired")}
+              className={`px-6 py-3 font-semibold transition-all relative ${
+                activeTab === "expired"
+                  ? "text-gray-900 border-b-2 border-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Expired Coupons
+              {coupons && coupons.expired_coupons.data.length > 0 && (
+                <span className="ml-2 bg-gray-400 text-white text-xs px-2 py-0.5 rounded-full">
+                  {coupons.expired_coupons.data.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Coupons Content */}
+          {loadingCoupons ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="w-12 h-12 border-4 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {activeTab === "active" ? (
+                coupons?.active_coupons.data.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-lg font-medium">No active coupons available</p>
+                    <p className="text-gray-400 text-sm mt-2">Check back later for new offers</p>
+                  </div>
+                ) : (
+                  coupons?.active_coupons.data.map((coupon) => (
+                    <div
+                      key={coupon.id}
+                      className="border-2 border-gray-200 rounded-2xl p-6 hover:border-gray-400 hover:shadow-lg transition-all duration-300 group"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="bg-gray-900 text-white px-4 py-2 rounded-lg font-mono font-bold text-lg tracking-wider">
+                              {coupon.coupon_code}
+                            </div>
+                            <button
+                              onClick={() => copyCouponCode(coupon.coupon_code)}
+                              className="text-gray-600 hover:text-gray-900 transition-colors"
+                              title="Copy code"
+                            >
+                              {copiedCode === coupon.coupon_code ? (
+                                <svg
+                                  className="w-5 h-5 text-green-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              )}
+                            </button>
+                            <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full font-medium capitalize">
+                              {coupon.coupon_type.replace("_", " ")}
+                            </span>
+                          </div>
+                          <h4 className="text-xl font-bold text-gray-900 mb-2">{coupon.discount.discount_title}</h4>
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              <span>
+                                {coupon.discount.discount_amount}
+                                {coupon.discount.discount_amount_type === "percent" ? "% OFF" : " OFF"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                              </svg>
+                              <span>Min: ₹{coupon.discount.min_purchase}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              <span>Max: ₹{coupon.discount.max_discount_amount}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500 mb-1">Valid until</div>
+                          <div className="text-lg font-bold text-gray-900">{formatDate(coupon.discount.end_date)}</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {coupon.discount.limit_per_user} use{coupon.discount.limit_per_user > 1 ? "s" : ""} per user
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
+              ) : coupons?.expired_coupons.data.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 text-lg font-medium">No expired coupons</p>
+                  <p className="text-gray-400 text-sm mt-2">Your expired coupons will appear here</p>
+                </div>
+              ) : (
+                coupons?.expired_coupons.data.map((coupon) => (
+                  <div
+                    key={coupon.id}
+                    className="border-2 border-gray-200 rounded-2xl p-6 opacity-60 relative overflow-hidden"
+                  >
+                    <div className="absolute top-4 right-4 bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-bold">
+                      EXPIRED
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="bg-gray-400 text-white px-4 py-2 rounded-lg font-mono font-bold text-lg tracking-wider">
+                            {coupon.coupon_code}
+                          </div>
+                          <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-medium capitalize">
+                            {coupon.coupon_type.replace("_", " ")}
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-bold text-gray-700 mb-2">{coupon.discount.discount_title}</h4>
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span>
+                              {coupon.discount.discount_amount}
+                              {coupon.discount.discount_amount_type === "percent" ? "% OFF" : " OFF"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                              />
+                            </svg>
+                            <span>Min: ₹{coupon.discount.min_purchase}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span>Max: ₹{coupon.discount.max_discount_amount}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500 mb-1">Expired on</div>
+                        <div className="text-lg font-bold text-gray-600">{formatDate(coupon.discount.end_date)}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Delete Account Section */}
+        <div className="bg-white rounded-3xl shadow-2xl p-8 mt-8 border-2 border-red-100">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Danger Zone</h3>
+              <p className="text-gray-600 mb-4">
+                Once you delete your account, there is no going back. Please be certain.
+              </p>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="bg-white border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center gap-2 group"
+              >
+                <svg
+                  className="w-5 h-5 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                Delete My Account
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-scaleIn">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+
+            <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">Delete Account?</h3>
+            <p className="text-gray-600 text-center mb-6">
+              This action cannot be undone. All your data, bookings, and account information will be permanently
+              deleted.
+            </p>
+
+            {deleteError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteError(null)
+                }}
+                disabled={deleteLoading}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {deleteLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    Yes, Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
