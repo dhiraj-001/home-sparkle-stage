@@ -119,10 +119,10 @@ const CategoriesGrid = () => {
 
       const headers = {
         "Content-Type": "application/json; charset=UTF-8",
-        "zoneId": "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+        zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
         "X-localization": "en",
-        "guest_id": "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-      };
+        guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+      }
 
       try {
         const response = await fetch(url, { headers });
@@ -255,7 +255,7 @@ const CategoriesGrid = () => {
               <Link
                 ref={(el) => addServiceRef(el, index)}
                 key={category.id}
-                to={`/service/${category.id}`}
+                to={`/category/${category.id}`}
                 className="group relative bg-card rounded-xl md:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-border/50 hover:border-primary/30 opacity-0 translate-y-8 scale-95"
               >
                 {/* Card Content */}

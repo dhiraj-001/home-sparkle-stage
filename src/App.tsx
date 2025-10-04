@@ -13,6 +13,8 @@ import Login from "./pages/AuthPages/Login";
 import { ConfigAPI, setZoneId } from "../api.js";
 import CategoriesPage from "./pages/Category/CategoryPage.js";
 import AllServices from "./pages/Services/AllServices.js";
+import ServiceDetail from "./pages/Services/ServiceDetail.js";
+import CategoryChildList from "./pages/Category/CategoryDetail.js";
 
 const queryClient = new QueryClient();
 
@@ -49,10 +51,11 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/service/:serviceName" element={<ServicesPage />} />
+            <Route path="/service/:id" element={<ServiceDetail />} />
             <Route path="/allservices" element={<AllServices />} />
             <Route path="/register" element={<Register />} />
             <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/category/:id" element={<CategoryChildList  />} />
             <Route path="/login" element={<Login />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
