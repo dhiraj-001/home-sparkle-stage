@@ -9,11 +9,26 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Eye, EyeOff, ChevronDown } from "lucide-react"
 import heroPainting from "@/assets/hero-ac-repair.jpg"
 import { Link, useNavigate } from "react-router-dom"
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
+
+// Country code options
+const countryCodes = [
+  { code: "+91", country: "India", flag: "🇮🇳" },
+  { code: "+1", country: "USA", flag: "🇺🇸" },
+  { code: "+44", country: "UK", flag: "🇬🇧" },
+  { code: "+61", country: "Australia", flag: "🇦🇺" },
+  { code: "+65", country: "Singapore", flag: "🇸🇬" },
+  { code: "+971", country: "UAE", flag: "🇦🇪" },
+  { code: "+86", country: "China", flag: "🇨🇳" },
+  { code: "+81", country: "Japan", flag: "🇯🇵" },
+  { code: "+82", country: "South Korea", flag: "🇰🇷" },
+  { code: "+33", country: "France", flag: "🇫🇷" },
+  { code: "+49", country: "Germany", flag: "🇩🇪" },
+]
 
 interface LoginFormData {
   email_or_phone: string
@@ -25,7 +40,9 @@ const Login: React.FC = () => {
     email_or_phone: "",
     password: "",
   })
-
+  const [loginType, setLoginType] = useState<"email" | "phone">("phone")
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91")
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -43,14 +60,20 @@ const Login: React.FC = () => {
     setLoading(true)
 
     try {
+      // Format the email_or_phone based on login type
+      let formattedIdentity = formData.email_or_phone
+      if (loginType === "phone") {
+        formattedIdentity = `${selectedCountryCode}${formData.email_or_phone}`
+      }
+
       // Generate a unique guest_id (you can use a library like uuid if needed)
       const guest_id = `a64dcd08-e47b-49d0-a785-92ce8ac3f6a6`
 
       const payload = {
-        email_or_phone: formData.email_or_phone,
+        email_or_phone: formattedIdentity,
         password: formData.password,
         guest_id: guest_id,
-        type: "phone" // Based on your API example
+        type: loginType
       }
 
       console.log("Sending login request with payload:", payload)
@@ -75,7 +98,7 @@ const Login: React.FC = () => {
         // Store token in localStorage
         localStorage.setItem("demand_token", token)
         localStorage.setItem("user_data", JSON.stringify({
-          email_or_phone: formData.email_or_phone,
+          email_or_phone: formattedIdentity,
           is_active: is_active,
           login_time: new Date().toISOString()
         }))
@@ -107,6 +130,13 @@ const Login: React.FC = () => {
       setLoading(false)
     }
   }
+
+  const handleCountrySelect = (countryCode: string) => {
+    setSelectedCountryCode(countryCode)
+    setShowCountryDropdown(false)
+  }
+
+  const selectedCountry = countryCodes.find(country => country.code === selectedCountryCode)
 
   // Check if user is already logged in
   useEffect(() => {
@@ -142,21 +172,98 @@ const Login: React.FC = () => {
               </Alert>
             )}
 
+            {/* Login Type Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Login with</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="loginType"
+                    value="email"
+                    checked={loginType === "email"}
+                    onChange={() => setLoginType("email")}
+                    className="text-primary"
+                  />
+                  Email
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="loginType"
+                    value="phone"
+                    checked={loginType === "phone"}
+                    onChange={() => setLoginType("phone")}
+                    className="text-primary"
+                  />
+                  Phone
+                </label>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email_or_phone" className="text-sm font-medium">
-                  Email or Phone
+                  {loginType === "email" ? "Email Address" : "Phone Number"}
                 </Label>
-                <Input
-                  id="email_or_phone"
-                  type="text"
-                  name="email_or_phone"
-                  placeholder="you@example.com or +1234567890"
-                  value={formData.email_or_phone}
-                  onChange={handleChange}
-                  required
-                  className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                />
+                
+                {loginType === "phone" ? (
+                  <div className="flex">
+                    {/* Country Code Dropdown */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        className="flex items-center gap-1 h-11 px-3 rounded-l-md border border-r-0 border-input bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors"
+                      >
+                        <span>{selectedCountry?.flag}</span>
+                        <span>{selectedCountryCode}</span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </button>
+                      
+                      {showCountryDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-background border border-input rounded-md shadow-lg z-10">
+                          {countryCodes.map((country) => (
+                            <button
+                              key={country.code}
+                              type="button"
+                              onClick={() => handleCountrySelect(country.code)}
+                              className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted transition-colors ${
+                                selectedCountryCode === country.code ? 'bg-primary/10 text-primary' : ''
+                              }`}
+                            >
+                              <span className="text-base">{country.flag}</span>
+                              <span className="flex-1 text-left">{country.country}</span>
+                              <span className="text-muted-foreground">{country.code}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Input
+                      id="email_or_phone"
+                      type="tel"
+                      name="email_or_phone"
+                      placeholder="1234567890"
+                      value={formData.email_or_phone}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-l-none transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    id="email_or_phone"
+                    type="email"
+                    name="email_or_phone"
+                    placeholder="you@example.com"
+                    value={formData.email_or_phone}
+                    onChange={handleChange}
+                    required
+                    className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  />
+                )}
               </div>
 
               <div className="space-y-2">
@@ -234,6 +341,14 @@ const Login: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Overlay to close dropdown when clicking outside */}
+      {showCountryDropdown && (
+        <div 
+          className="fixed inset-0 z-0" 
+          onClick={() => setShowCountryDropdown(false)}
+        />
+      )}
     </div>
   )
 }

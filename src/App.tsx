@@ -10,6 +10,9 @@ import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
 import Register from "./pages/AuthPages/Registration";
 import Login from "./pages/AuthPages/Login";
+import ForgotPassword from "./pages/AuthPages/ForgotPassword";
+import OtpVerification from "./pages/AuthPages/OtpVerification";
+import ResetPassword from "./pages/AuthPages/ResetPassword";
 import { ConfigAPI, setZoneId } from "../api.js";
 import CategoriesPage from "./pages/Category/CategoryPage.js";
 import AllServices from "./pages/Services/AllServices.js";
@@ -58,6 +61,9 @@ const App = () => {
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/category/:id" element={<CategoryChildList  />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/otp-verification" element={<OtpVerification />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<ProfilePage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
