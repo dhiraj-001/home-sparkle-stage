@@ -66,6 +66,7 @@ interface CategoryResponse {
 }
 
 const CategoryChildList: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
   const { id } = useParams<{ id: string }>();
   const categoryId = id || "";
   const token = undefined;
@@ -96,7 +97,7 @@ const CategoryChildList: React.FC = () => {
       }
 
       const response = await fetch(
-        `https://admin.sarvoclub.com/api/v1/customer/category/childes?id=${categoryId}&limit=${limit}&offset=${page}`,
+        `${baseUrl}/api/v1/customer/category/childes?id=${categoryId}&limit=${limit}&offset=${page}`,
         {
           method: "GET",
           headers: headers,

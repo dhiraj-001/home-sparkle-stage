@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import {fetchCoupons} from "@/helpers/coupon"
 
 interface User {
   id: string;
@@ -24,6 +25,7 @@ interface User {
   bookings_count: number;
   created_at: string;
   date_of_birth: string | null;
+  identification_number: string | null;
 }
 
 interface Discount {
@@ -59,7 +61,8 @@ interface CouponsData {
 }
 
 const ProfilePage = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
+  const [user, setUser] = useState<User | null>(null)
   const [coupons, setCoupons] = useState<CouponsData | null>(null);
   const [loadingCoupons, setLoadingCoupons] = useState(true);
   const [activeTab, setActiveTab] = useState<"active" | "expired">("active");
@@ -94,7 +97,7 @@ const ProfilePage = () => {
 
     try {
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/info",
+        `${baseUrl}/api/v1/customer/info`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -135,36 +138,8 @@ const ProfilePage = () => {
     fetchUserData();
   }, [navigate]);
 
-  useEffect(() => {
-    const fetchCoupons = async () => {
-      try {
-        const response = await fetch(
-          "https://admin.sarvoclub.com/api/v1/customer/coupon?limit=100&offset=1",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-              "X-localization": "en",
-              guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-              "Accept-Charset": "UTF-8",
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.response_code === "default_200" && data.content) {
-            setCoupons(data.content);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch coupons:", error);
-      } finally {
-        setLoadingCoupons(false);
-      }
-    };
-
-    fetchCoupons();
+  useEffect(() =>{
+    fetchCoupons(setCoupons, setLoadingCoupons);
   }, []);
 
   const handleLogout = async () => {
@@ -176,7 +151,7 @@ const ProfilePage = () => {
 
     try {
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/auth/logout",
+        `${baseUrl}/api/v1/customer/auth/logout`,
         {
           method: "POST",
           headers: {
@@ -208,7 +183,7 @@ const ProfilePage = () => {
 
     try {
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/remove-account",
+        `${baseUrl}/api/v1/customer/remove-account`,
         {
           method: "DELETE",
           headers: {
@@ -265,7 +240,7 @@ const ProfilePage = () => {
       body.append("_method", "PUT");
 
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/update/profile",
+        `${baseUrl}/api/v1/customer/update/profile`,
         {
           method: "POST",
           headers: {
@@ -781,7 +756,7 @@ const ProfilePage = () => {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              ActiveCoupons
+              Active
               {coupons && coupons.active_coupons.data.length > 0 && (
                 <span className="ml-2 bg-gray-900 text-white text-xs px-2 py-0.5 rounded-full">
                   {coupons.active_coupons.data.length}
@@ -796,7 +771,7 @@ const ProfilePage = () => {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              ExpiredCoupons
+              Expired
               {coupons && coupons.expired_coupons.data.length > 0 && (
                 <span className="ml-2 bg-gray-400 text-white text-xs px-2 py-0.5 rounded-full">
                   {coupons.expired_coupons.data.length}

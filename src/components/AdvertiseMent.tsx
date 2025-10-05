@@ -105,6 +105,7 @@ const emptyStateVariants = {
 }
 
 const AdvertisementList: React.FC<AdvertisementListProps> = ({ token, limit = 5, offset = 1 }) => {
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)

@@ -9,6 +9,7 @@ import Footer from "../components/Footer"
 import Header from "@/components/Header"
 
 const OfferDetailPage: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
   const { type, id } = useParams<{ type: string; id: string }>()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
@@ -17,7 +18,7 @@ const OfferDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchOfferDetails = async () => {
       try {
-        const response = await fetch("https://admin.sarvoclub.com/api/v1/customer/banner/list")
+        const response = await fetch(`${baseUrl}/api/v1/customer/banner/list`)
         const data = await response.json()
 
         if (data.response_code === "default_200" && data.content.data) {

@@ -1,7 +1,8 @@
 
 
 async function fetchCategories(offset = 1, limit = 10) {
-  const url = `https://admin.sarvoclub.com/api/v1/customer/category?offset=${offset}&limit=${limit}`;
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
+  const url = `${baseUrl}/api/v1/customer/category?offset=${offset}&limit=${limit}`;
 
   const headers = {
     "Content-Type": "application/json; charset=UTF-8",

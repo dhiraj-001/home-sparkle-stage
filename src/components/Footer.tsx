@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import SocialMediaLinks from "./ui/SocialMediLinks";
 import logo from "../assets/logo.jpeg";
 const Footer = () => {
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
   return (
     <footer className="bg-secondary/50 border-t border-border pt-12 pb-6">
       <div className="container mx-auto px-4">
@@ -57,7 +58,7 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="https://admin.sarvoclub.com/privacy-policy"
+                  href={`${baseUrl}/privacy-policy`}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Privacy policy

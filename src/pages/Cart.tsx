@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from "lucide-react"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
+import { applyCoupon, removeCoupon, getAppliedCouponCodes } from "@/helpers/coupon"
 
 interface CartItem {
   id: string
@@ -76,6 +77,7 @@ interface CartResponse {
 }
 
 const CartPage: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
   const [cartData, setCartData] = useState<CartResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,7 +100,7 @@ const CartPage: React.FC = () => {
       setError(null)
 
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/cart/list?limit=100&offset=1",
+        `${baseUrl}/api/v1/customer/cart/list?limit=100&offset=1`,
         {
           method: "GET",
           headers: {
@@ -144,7 +146,7 @@ const CartPage: React.FC = () => {
       setUpdatingItems(prev => new Set(prev).add(itemId))
 
       const response = await fetch(
-        `https://admin.sarvoclub.com/api/v1/customer/cart/update-quantity/${itemId}`,
+        `${baseUrl}/api/v1/customer/cart/update-quantity/${itemId}`,
         {
           method: "PUT",
           headers: {
@@ -168,7 +170,8 @@ const CartPage: React.FC = () => {
       const data = await response.json()
 
       if (data.response_code === "default_update_200") {
-        await fetchCartData() // Refresh cart data
+        // Immediately update the local state for better UX
+        await fetchCartData()
       } else {
         throw new Error(data.message || "Failed to update quantity")
       }
@@ -195,7 +198,7 @@ const CartPage: React.FC = () => {
       setDeletingItems(prev => new Set(prev).add(itemId))
 
       const response = await fetch(
-        `https://admin.sarvoclub.com/api/v1/customer/cart/remove/${itemId}`,
+        `${baseUrl}/api/v1/customer/cart/remove/${itemId}`,
         {
           method: "DELETE",
           headers: {
@@ -215,7 +218,8 @@ const CartPage: React.FC = () => {
       const data = await response.json()
 
       if (data.response_code === "default_delete_200") {
-        await fetchCartData() // Refresh cart data
+        // Immediately update the local state for better UX
+        await fetchCartData()
       } else {
         throw new Error(data.message || "Failed to remove item")
       }
@@ -231,49 +235,21 @@ const CartPage: React.FC = () => {
     }
   }
 
-  const applyCoupon = async () => {
+  const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return
-
-    const token = localStorage.getItem("demand_token")
-    if (!token) {
-      navigate("/login")
-      return
-    }
 
     try {
       setApplyingCoupon(true)
       setError(null)
-
-      const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/coupon/apply",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "X-localization": "en",
-            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-            "Accept-Charset": "UTF-8",
-          },
-          body: JSON.stringify({
-            coupon_code: couponCode.trim(),
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.response_code === "default_200") {
-        setCouponCode("")
-        await fetchCartData() // Refresh cart data
-      } else {
-        throw new Error(data.message || "Failed to apply coupon")
-      }
+      
+      await applyCoupon(couponCode.trim())
+      setCouponCode("")
+      
+      // Immediately refresh cart data to show updated prices
+      await fetchCartData()
+      
+      // Show success message
+      setError(null)
     } catch (err: any) {
       console.error("Failed to apply coupon:", err)
       setError(err.message || "An error occurred while applying coupon")
@@ -282,46 +258,18 @@ const CartPage: React.FC = () => {
     }
   }
 
-  const removeCoupon = async (couponCodeToRemove: string) => {
-    const token = localStorage.getItem("demand_token")
-    if (!token) {
-      navigate("/login")
-      return
-    }
-
+  const handleRemoveCoupon = async () => {
     try {
       setRemovingCoupon(true)
       setError(null)
-
-      const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/coupon/remove",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "X-localization": "en",
-            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-            "Accept-Charset": "UTF-8",
-          },
-          body: JSON.stringify({
-            coupon_code: couponCodeToRemove,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.response_code === "default_200") {
-        await fetchCartData() // Refresh cart data
-      } else {
-        throw new Error(data.message || "Failed to remove coupon")
-      }
+      
+      await removeCoupon()
+      
+      // Immediately refresh cart data to show updated prices
+      await fetchCartData()
+      
+      // Show success message
+      setError(null)
     } catch (err: any) {
       console.error("Failed to remove coupon:", err)
       setError(err.message || "An error occurred while removing coupon")
@@ -330,12 +278,41 @@ const CartPage: React.FC = () => {
     }
   }
 
+  // Optimistically update cart data when items change
+  const updateCartItemOptimistically = (itemId: string, updates: Partial<CartItem>) => {
+    if (!cartData) return
+
+    setCartData(prev => {
+      if (!prev) return prev
+
+      const updatedCart = {
+        ...prev,
+        content: {
+          ...prev.content,
+          cart: {
+            ...prev.content.cart,
+            data: prev.content.cart.data.map(item =>
+              item.id === itemId ? { ...item, ...updates } : item
+            )
+          }
+        }
+      }
+
+      return updatedCart
+    })
+  }
+
   useEffect(() => {
     fetchCartData()
   }, [])
 
   const cartItems = cartData?.content.cart.data || []
-  const totalCost = cartData?.content.total_cost || 0
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.service_cost * item.quantity), 0)
+  const normalDiscount = cartItems.reduce((sum, item) => sum + item.campaign_discount, 0)
+  const couponDiscount = cartItems.reduce((sum, item) => sum + item.coupon_discount, 0)
+  const gst = cartItems.reduce((sum, item) => sum + item.tax_amount, 0)
+  const totalCost = subtotal - (normalDiscount + couponDiscount) + gst
+  const appliedCouponCodes = getAppliedCouponCodes(cartItems)
 
   if (loading) {
     return (
@@ -380,14 +357,14 @@ const CartPage: React.FC = () => {
           
           {cartItems.length > 0 && (
             <div className="text-right">
-              <p className="text-2xl font-bold text-gray-900">₹{totalCost}</p>
+              <p className="text-2xl font-bold text-gray-900">₹{totalCost.toFixed(2)}</p>
               <p className="text-sm text-gray-600">Total Amount</p>
             </div>
           )}
         </div>
 
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant={error.includes("Success") ? "default" : "destructive"} className="mb-6">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -499,18 +476,23 @@ const CartPage: React.FC = () => {
                             {/* Price Display */}
                             <div className="text-right">
                               <div className="flex items-center gap-2">
-                                {item.campaign_discount > 0 && (
+                                {item.campaign_discount > 0 || item.coupon_discount > 0 ? (
                                   <span className="text-sm text-gray-500 line-through">
-                                    ₹{item.service_cost}
+                                    ₹{(item.service_cost * item.quantity).toFixed(2)}
                                   </span>
-                                )}
+                                ) : null}
                                 <span className="text-lg font-bold text-gray-900">
-                                  ₹{item.total_cost}
+                                  ₹{item.total_cost.toFixed(2)}
                                 </span>
                               </div>
-                              {item.campaign_discount > 0 && (
+                              {(item.campaign_discount > 0 || item.coupon_discount > 0) && (
                                 <span className="text-xs text-green-600 font-medium">
-                                  Save ₹{item.campaign_discount}
+                                  Save ₹{(item.campaign_discount + item.coupon_discount).toFixed(2)}
+                                </span>
+                              )}
+                              {item.coupon_code && (
+                                <span className="text-xs text-blue-600 font-medium block">
+                                  Coupon: {item.coupon_code}
                                 </span>
                               )}
                             </div>
@@ -543,7 +525,7 @@ const CartPage: React.FC = () => {
                         disabled={applyingCoupon}
                       />
                       <Button
-                        onClick={applyCoupon}
+                        onClick={handleApplyCoupon}
                         disabled={applyingCoupon || !couponCode.trim()}
                         size="sm"
                       >
@@ -555,15 +537,15 @@ const CartPage: React.FC = () => {
                       </Button>
                     </div>
                     {/* Applied Coupons */}
-                    {cartItems.some(item => item.coupon_code) && (
+                    {appliedCouponCodes.length > 0 && (
                       <div className="space-y-1">
-                        {[...new Set(cartItems.map(item => item.coupon_code).filter(code => code))].map((code) => (
+                        {appliedCouponCodes.map((code) => (
                           <div key={code} className="flex items-center justify-between bg-green-50 px-2 py-1 rounded text-sm">
                             <span className="text-green-800 font-medium">{code}</span>
-                            {/* <Button
+                            <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => removeCoupon(code)}
+                              onClick={handleRemoveCoupon}
                               disabled={removingCoupon}
                               className="h-6 px-2 text-xs"
                             >
@@ -572,7 +554,7 @@ const CartPage: React.FC = () => {
                               ) : (
                                 "Remove"
                               )}
-                            </Button> */}
+                            </Button>
                           </div>
                         ))}
                       </div>
@@ -582,22 +564,34 @@ const CartPage: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
-                      <span>₹{totalCost}</span>
+                      <span>₹{subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Discount</span>
-                      <span className="text-green-600">
-                        -₹{cartItems.reduce((sum, item) => sum + item.campaign_discount, 0)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tax</span>
-                      <span>₹{cartItems.reduce((sum, item) => sum + item.tax_amount, 0)}</span>
-                    </div>
+                    {normalDiscount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Campaign Discount</span>
+                        <span className="text-green-600">
+                          -₹{normalDiscount.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Coupon Discount</span>
+                        <span className="text-green-600">
+                          -₹{couponDiscount.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {gst >= 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">GST</span>
+                        <span>+₹{gst.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold">
                         <span>Total</span>
-                        <span className="text-lg">₹{totalCost}</span>
+                        <span className="text-lg">₹{totalCost.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

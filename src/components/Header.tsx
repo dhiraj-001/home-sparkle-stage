@@ -37,6 +37,8 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState<SearchResults>({ services: [], total: 0 })
   const [isSearching, setIsSearching] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const [allServices, setAllServices] = useState<Service[]>([])
+  const [servicesLoaded, setServicesLoaded] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
@@ -44,6 +46,7 @@ const Header = () => {
   useEffect(() => {
     fetchCartCount()
     fetchFavoritesCount()
+    loadAllServices()
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -64,20 +67,75 @@ const Header = () => {
     }
   }, [])
 
-  // Debounced search function
+  // Load all services for client-side search
+  const loadAllServices = async () => {
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
+      const response = await fetch(`${baseUrl}/api/v1/customer/service?limit=100&offset=1`, {
+        headers: {
+          "Content-Type": "application/json",
+          zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+          "X-localization": "en",
+          guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+          "Accept-Encoding": "gzip, deflate, br",
+        },
+      })
+
+      const data = await response.json()
+
+      if (data.response_code === "default_200" && data.content.data) {
+        setAllServices(data.content.data)
+        setServicesLoaded(true)
+      }
+    } catch (err) {
+      console.error("Error loading services for search:", err)
+    }
+  }
+
+  // Client-side search function
   useEffect(() => {
+    if (!servicesLoaded) return
+
     if (searchQuery.trim() === "") {
       setSearchResults({ services: [], total: 0 })
       setShowSearchResults(false)
       return
     }
 
+    setIsSearching(true)
+    setShowSearchResults(true)
+
+    // Simulate slight delay for better UX
     const delayDebounceFn = setTimeout(() => {
-      performSearch(searchQuery)
-    }, 300)
+      performClientSearch(searchQuery)
+    }, 200)
 
     return () => clearTimeout(delayDebounceFn)
-  }, [searchQuery])
+  }, [searchQuery, servicesLoaded])
+
+  const performClientSearch = (query: string) => {
+    if (!query.trim() || allServices.length === 0) {
+      setSearchResults({ services: [], total: 0 })
+      setIsSearching(false)
+      return
+    }
+
+    const lowercaseQuery = query.toLowerCase().trim()
+    
+    // Filter services based on search query
+    const filteredServices = allServices.filter(service => 
+      service.name.toLowerCase().includes(lowercaseQuery) ||
+      service.short_description.toLowerCase().includes(lowercaseQuery) ||
+      service.category.name.toLowerCase().includes(lowercaseQuery) ||
+      (service.description && service.description.toLowerCase().includes(lowercaseQuery))
+    )
+
+    setSearchResults({
+      services: filteredServices,
+      total: filteredServices.length
+    })
+    setIsSearching(false)
+  }
 
   const fetchCartCount = async () => {
     const token = localStorage.getItem("demand_token")
@@ -138,45 +196,6 @@ const Header = () => {
     }
   }
 
-  const performSearch = async (query: string) => {
-    if (!query.trim()) return
-
-    setIsSearching(true)
-    setShowSearchResults(true)
-
-    try {
-      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/service?limit=50&offset=1&search=${encodeURIComponent(query)}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-            "X-localization": "en",
-            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-            "Accept-Encoding": "gzip, deflate, br",
-          },
-        }
-      )
-
-      const data = await response.json()
-
-      if (data.response_code === "default_200" && data.content.data) {
-        setSearchResults({
-          services: data.content.data,
-          total: data.content.total
-        })
-      } else {
-        setSearchResults({ services: [], total: 0 })
-      }
-    } catch (err) {
-      console.error("Error searching services:", err)
-      setSearchResults({ services: [], total: 0 })
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
   }
@@ -184,6 +203,13 @@ const Header = () => {
   const handleSearchInputFocus = () => {
     if (searchQuery.trim() && searchResults.services.length > 0) {
       setShowSearchResults(true)
+    } else if (servicesLoaded) {
+      // Show some popular services when focusing on empty search
+      setShowSearchResults(true)
+      setSearchResults({
+        services: allServices.slice(0, 5), // Show first 5 services as suggestions
+        total: allServices.length
+      })
     }
   }
 
@@ -207,6 +233,19 @@ const Header = () => {
   const isActiveLink = (path: string) => {
     return location.pathname === path
   }
+
+  // Get display services - either search results or popular suggestions
+  const getDisplayServices = () => {
+    if (searchQuery.trim() && searchResults.services.length > 0) {
+      return searchResults.services
+    } else if (!searchQuery.trim() && showSearchResults) {
+      // Show popular services when search is empty but dropdown is open
+      return allServices.slice(0, 5)
+    }
+    return []
+  }
+
+  const displayServices = getDisplayServices()
 
   return (
     <>
@@ -303,20 +342,29 @@ const Header = () => {
               {/* Search Results Dropdown */}
               {showSearchResults && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-96 overflow-y-auto z-50">
-                  {isSearching ? (
+                  {!servicesLoaded ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="mt-2">Loading services...</p>
+                    </div>
+                  ) : isSearching ? (
                     <div className="p-4 text-center text-gray-500">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                       <p className="mt-2">Searching...</p>
                     </div>
-                  ) : searchResults.services.length > 0 ? (
+                  ) : displayServices.length > 0 ? (
                     <>
                       <div className="p-3 border-b border-gray-100">
                         <p className="text-sm text-gray-600">
-                          Found {searchResults.total} result{searchResults.total !== 1 ? 's' : ''}
+                          {searchQuery.trim() ? (
+                            <>Found {searchResults.total} result{searchResults.total !== 1 ? 's' : ''}</>
+                          ) : (
+                            "Popular Services"
+                          )}
                         </p>
                       </div>
                       <div className="max-h-80 overflow-y-auto">
-                        {searchResults.services.slice(0, 5).map((service) => (
+                        {displayServices.slice(0, 5).map((service) => (
                           <div
                             key={service.id}
                             onClick={() => handleServiceClick(service.id)}
@@ -348,7 +396,7 @@ const Header = () => {
                           </div>
                         ))}
                       </div>
-                      {searchResults.total > 5 && (
+                      {searchQuery.trim() && searchResults.total > 5 && (
                         <div className="p-3 border-t border-gray-100 bg-gray-50">
                           <button
                             onClick={handleViewAllResults}
@@ -359,11 +407,15 @@ const Header = () => {
                         </div>
                       )}
                     </>
-                  ) : searchQuery ? (
+                  ) : searchQuery.trim() ? (
                     <div className="p-4 text-center text-gray-500">
                       <p>No services found for "{searchQuery}"</p>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">
+                      <p>No services available</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -431,7 +483,7 @@ const Header = () => {
                   placeholder="Search services..."
                   value={searchQuery}
                   onChange={handleSearchInputChange}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {searchQuery && (
                   <button
@@ -497,5 +549,4 @@ const Header = () => {
   )
 }
 
-export { Header }
 export default Header

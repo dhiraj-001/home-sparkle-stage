@@ -1,14 +1,18 @@
-
 "use client"
 
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, ArrowLeft } from "lucide-react"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/hooks/use-toast"
+import { sendBookingRequest } from "@/helpers/bookinghelper"
+import { MapPin, Calendar, CreditCard, User, CheckCircle2, Loader2, Navigation } from "lucide-react"
 
 interface CartItem {
   id: string
@@ -75,148 +79,67 @@ interface CartResponse {
   errors: string[]
 }
 
-interface Address {
-  id: string
-  address: string
-  city: string
-  state: string
-  zip_code: string
-  country: string
-  latitude: string
-  longitude: string
+interface AddressForm {
+  address_type: string
+  address_label: string
   contact_person_name: string
   contact_person_number: string
-  is_default: number
+  address: string
+  lat: string
+  lon: string
+  city: string
+  zip_code: string
+  country: string
+  street: string
+  house: string
+  floor: string
 }
 
-const CheckoutPage: React.FC = () => {
-  const [cartData, setCartData] = useState<CartResponse | null>(null)
-  const [addresses, setAddresses] = useState<Address[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState("")
-  const [selectedAddressId, setSelectedAddressId] = useState<string>("")
-  const [showAddAddress, setShowAddAddress] = useState(false)
-  const [addingAddress, setAddingAddress] = useState(false)
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
+export default function CheckoutPage() {
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [cartLoading, setCartLoading] = useState(true)
+  const [bookingSuccess, setBookingSuccess] = useState(false)
+  const [gettingLocation, setGettingLocation] = useState(false)
 
-  const handleAddAddress = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const form = e.currentTarget
-    const formData = new FormData(form)
-    const addressData = {
-      contact_person_name: formData.get("contact_person_name") as string,
-      contact_person_number: formData.get("contact_person_number") as string,
-      address: formData.get("address") as string,
-      city: formData.get("city") as string,
-      state: formData.get("state") as string,
-      zip_code: formData.get("zip_code") as string,
-      country: formData.get("country") as string,
-      lat: formData.get("lat") as string || "28.6139", // Default to Delhi coordinates
-      lon: formData.get("lon") as string || "77.2090",
-      address_type: formData.get("address_type") as string || "home",
-      address_label: formData.get("address_label") as string || "Home",
-      house: formData.get("house") as string || "",
-      floor: formData.get("floor") as string || "",
-      street: formData.get("street") as string || "",
-    }
+  const [addressForm, setAddressForm] = useState<AddressForm>({
+    address_type: "others",
+    address_label: "home",
+    contact_person_name: "",
+    contact_person_number: "",
+    address: "",
+    lat: "",
+    lon: "",
+    city: "",
+    zip_code: "",
+    country: "",
+    street: "",
+    house: "",
+    floor: "",
+  })
 
-    const token = localStorage.getItem("demand_token")
-    if (!token) return
+  const [serviceSchedule, setServiceSchedule] = useState("")
+  const [paymentMethod, setPaymentMethod] = useState("cash_after_service")
 
-    try {
-      setAddingAddress(true)
-      setError(null)
-
-      const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/address",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "X-localization": "en",
-            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-            "Accept-Charset": "UTF-8",
-          },
-          body: JSON.stringify(addressData),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.response_code === "default_200") {
-        setShowAddAddress(false)
-        form.reset()
-        await fetchAddresses()
-      } else {
-        throw new Error(data.message || "Failed to add address")
-      }
-    } catch (err: any) {
-      console.error("Failed to add address:", err)
-      setError(err.message || "An error occurred while adding address")
-    } finally {
-      setAddingAddress(false)
-    }
-  }
-
-  const fetchAddresses = async () => {
-    const token = localStorage.getItem("demand_token")
-    if (!token) return
-
-    try {
-      const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/address",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "X-localization": "en",
-            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-            "Accept-Charset": "UTF-8",
-          },
-        }
-      )
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.response_code === "default_200") {
-          setAddresses(data.content || [])
-          // Auto-select default address if available
-          const defaultAddr = data.content?.find((addr: Address) => addr.is_default === 1)
-          if (defaultAddr) {
-            setSelectedAddressId(defaultAddr.id)
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch addresses:", err)
-    }
-  }
-
-  const fetchCartData = async () => {
+  const fetchCartItems = async () => {
     const token = localStorage.getItem("demand_token")
     if (!token) {
-      navigate("/login")
+      toast({
+        title: "Not Logged In",
+        description: "Please login to view your cart.",
+        variant: "destructive",
+      })
+      setTimeout(() => navigate("/login"), 2000)
       return
     }
 
     try {
-      setLoading(true)
-      setError(null)
-
+      setCartLoading(true)
+      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/cart/list?limit=100&offset=1",
+        `${baseUrl}/api/v1/customer/cart/list?limit=100&offset=1`,
         {
           method: "GET",
           headers: {
@@ -236,435 +159,560 @@ const CheckoutPage: React.FC = () => {
 
       const data: CartResponse = await response.json()
 
-      if (data.response_code === "default_200") {
-        setCartData(data)
+      if (data.response_code.includes("200")) {
+        setCartItems(data.content.cart.data)
+        if (data.content.cart.data.length === 0) {
+          toast({
+            title: "Empty Cart",
+            description: "Your cart is empty. Redirecting...",
+            variant: "destructive",
+          })
+          setTimeout(() => navigate("/cart"), 2000)
+        }
       } else {
         throw new Error(data.message || "Failed to fetch cart data")
       }
     } catch (err: any) {
       console.error("Failed to fetch cart data:", err)
-      setError(err.message || "An error occurred while fetching cart data")
+      toast({
+        title: "Error",
+        description: err.message || "An error occurred while fetching cart data",
+        variant: "destructive",
+      })
+      setTimeout(() => navigate("/cart"), 2000)
     } finally {
-      setLoading(false)
+      setCartLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchCartData()
-    fetchAddresses()
-  }, [])
+    fetchCartItems()
+  }, [navigate, toast])
 
-  const cartItems = cartData?.content.cart.data || []
-  const totalCost = cartData?.content.total_cost || 0
-
-  const handleProceedToPayment = () => {
-    if (!selectedDate) {
-      setError("Please select a date for the service")
-      return
-    }
-    if (!selectedAddressId) {
-      setError("Please select a delivery address")
-      return
-    }
-    // TODO: Implement payment logic
-    alert(`Proceeding to payment for date: ${selectedDate} at address ID: ${selectedAddressId}`)
+  const handleInputChange = (field: keyof AddressForm, value: string) => {
+    setAddressForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  if (loading) {
+  const getCurrentLocation = () => {
+    setGettingLocation(true)
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setAddressForm((prev) => ({
+            ...prev,
+            lat: position.coords.latitude.toString(),
+            lon: position.coords.longitude.toString(),
+          }))
+          toast({
+            title: "Location Retrieved",
+            description: "Your current location has been set.",
+          })
+          setGettingLocation(false)
+        },
+        (error) => {
+          toast({
+            title: "Location Error",
+            description: "Unable to retrieve your location. Please enter manually.",
+            variant: "destructive",
+          })
+          setGettingLocation(false)
+        },
+      )
+    } else {
+      toast({
+        title: "Not Supported",
+        description: "Geolocation is not supported by your browser.",
+        variant: "destructive",
+      })
+      setGettingLocation(false)
+    }
+  }
+
+  const calculateTotal = () => {
+    return cartItems.reduce((sum, item) => sum + item.total_cost, 0)
+  }
+
+  const validateForm = () => {
+    if (!addressForm.contact_person_name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter contact person name.",
+        variant: "destructive",
+      })
+      return false
+    }
+    if (!addressForm.contact_person_number.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter contact person number.",
+        variant: "destructive",
+      })
+      return false
+    }
+    if (!addressForm.address.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your address.",
+        variant: "destructive",
+      })
+      return false
+    }
+    if (!addressForm.lat || !addressForm.lon) {
+      toast({
+        title: "Validation Error",
+        description: "Please provide location coordinates.",
+        variant: "destructive",
+      })
+      return false
+    }
+    if (!serviceSchedule) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a service schedule.",
+        variant: "destructive",
+      })
+      return false
+    }
+    return true
+  }
+
+  const handlePlaceOrder = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+
+    const token = localStorage.getItem("demand_token");
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to place an order.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
+      const zoneId = "a02c55ff-cb84-4bbb-bf91-5300d1766a29";
+      const guestId = "7e223db0-9f62-11f0-bba0-779e4e64bbc8";
+
+      const bookingData = {
+        payment_method: paymentMethod,
+        zone_id: zoneId,
+        service_schedule: serviceSchedule,
+        service_address_id: "0", // New address
+        guest_id: guestId,
+        service_address: {
+          id: "null",
+          address_type: addressForm.address_type,
+          address_label: addressForm.address_label,
+          contact_person_name: addressForm.contact_person_name,
+          contact_person_number: addressForm.contact_person_number,
+          address: addressForm.address,
+          lat: addressForm.lat,
+          lon: addressForm.lon,
+          city: addressForm.city,
+          zip_code: addressForm.zip_code,
+          country: addressForm.country,
+          zone_id: zoneId,
+          _method: null,
+          street: addressForm.street,
+          house: addressForm.house,
+          floor: addressForm.floor,
+          available_service_count: cartItems.length,
+        },
+        is_partial: 0,
+        service_type: "regular",
+        booking_type: "daily",
+        dates: null,
+        new_user_info: null,
+        service_location: "customer",
+      };
+
+      const bookingConfig = {
+        authorization: `Bearer ${token}`,
+        baseURL: baseUrl,
+        bookingData: bookingData,
+        additionalHeaders: {
+          "X-localization": "en",
+          zoneId: zoneId,
+          guest_id: guestId,
+          "Accept-Charset": "UTF-8",
+        },
+      };
+
+      const response = await sendBookingRequest(bookingConfig);
+
+      if (response.response_code.include("200") || response.response_code === "200") {
+        setBookingSuccess(true);
+        // Clear cart
+        localStorage.removeItem("cart");
+        toast({
+          title: "Booking Successful!",
+          description: "Your service has been booked successfully.",
+        });
+        // Redirect after 3 seconds
+        setTimeout(() => {
+          navigate("/bookings");
+        }, 3000);
+      } else {
+        throw new Error(response.message || "Booking failed");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Booking Failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (bookingSuccess) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-              <p className="text-gray-600">Loading checkout...</p>
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 p-4">
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          >
+            <CheckCircle2 className="w-24 h-24 text-green-500 mx-auto mb-6" />
+          </motion.div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h1>
+          <p className="text-gray-600 mb-4">
+            Your service has been booked successfully. Redirecting to your bookings...
+          </p>
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Redirecting...</span>
           </div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
-  if (cartItems.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <Card className="text-center py-12">
-            <CardContent className="space-y-4">
-              <h3 className="text-xl font-semibold text-gray-900">Your cart is empty</h3>
-              <p className="text-gray-600">Add some services to proceed with checkout.</p>
-              <Button onClick={() => navigate("/")}>Browse Services</Button>
-            </CardContent>
-          </Card>
-        </div>
-        <Footer />
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
+          <p className="text-gray-600">Complete your booking details</p>
+        </motion.div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="rounded-full"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
-              <p className="text-gray-600 mt-1">Complete your booking</p>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Order Summary */}
-          <div className="lg:col-span-2 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-                <CardDescription>{cartItems.length} item{cartItems.length !== 1 ? 's' : ''} in your order</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <img
-                      src={item.service.thumbnail_full_path || "/placeholder.svg"}
-                      alt={item.service.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{item.service.name}</h3>
-                      <p className="text-sm text-gray-600">{item.category.name}</p>
-                      <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">₹{item.total_cost}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Checkout Details */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle>Service Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Address Selection */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Select Delivery Address</label>
-                  {addresses.length > 0 ? (
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Form */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Contact Information */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      {addresses.map((addr) => (
-                        <div
-                          key={addr.id}
-                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                            selectedAddressId === addr.id
-                              ? 'border-primary bg-primary/5'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setSelectedAddressId(addr.id)}
-                        >
-                          <div className="flex items-start gap-2">
-                            <input
-                              type="radio"
-                              checked={selectedAddressId === addr.id}
-                              onChange={() => setSelectedAddressId(addr.id)}
-                              className="mt-1"
-                            />
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{addr.contact_person_name}</p>
-                              <p className="text-sm text-gray-600">{addr.contact_person_number}</p>
-                              <p className="text-sm text-gray-600">{addr.address}, {addr.city}, {addr.state} {addr.zip_code}</p>
-                              {addr.is_default === 1 && (
-                                <span className="inline-block mt-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Default</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                      <Label htmlFor="contact_name">Contact Person Name *</Label>
+                      <Input
+                        id="contact_name"
+                        placeholder="Enter full name"
+                        value={addressForm.contact_person_name}
+                        onChange={(e) => handleInputChange("contact_person_name", e.target.value)}
+                      />
                     </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">No addresses found. Add a new address below.</p>
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAddAddress(!showAddAddress)}
-                    className="w-full"
-                  >
-                    {showAddAddress ? 'Cancel' : 'Add New Address'}
-                  </Button>
-
-                  {/* Add New Address Form */}
-                  {showAddAddress && (
-                    <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                      <h4 className="text-sm font-medium text-gray-700 mb-3">Add New Address</h4>
-                      <form onSubmit={handleAddAddress} className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            name="contact_person_name"
-                            placeholder="Contact Person Name"
-                            required
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                          <input
-                            type="tel"
-                            name="contact_person_number"
-                            placeholder="Contact Number"
-                            required
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            name="house"
-                            placeholder="House/Building"
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                          <input
-                            type="text"
-                            name="floor"
-                            placeholder="Floor"
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          name="street"
-                          placeholder="Street/Area"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
-                        <textarea
-                          name="address"
-                          placeholder="Full Address"
-                          required
-                          rows={2}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
-                        <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            name="city"
-                            placeholder="City"
-                            required
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                          <input
-                            type="text"
-                            name="state"
-                            placeholder="State"
-                            required
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            name="zip_code"
-                            placeholder="ZIP Code"
-                            required
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                          <input
-                            type="text"
-                            name="country"
-                            placeholder="Country"
-                            required
-                            defaultValue="India"
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <select
-                            name="address_type"
-                            defaultValue="home"
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          >
-                            <option value="home">Home</option>
-                            <option value="office">Office</option>
-                            <option value="others">Other</option>
-                          </select>
-                          <input
-                            type="text"
-                            name="address_label"
-                            placeholder="Address Label (e.g., My Home)"
-                            defaultValue="Home"
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                        </div>
-                        {/* <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">Location Coordinates</label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <input
-                              type="text"
-                              name="lat"
-                              placeholder="Latitude"
-                              defaultValue="28.6139"
-                              required
-                              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                            />
-                            <input
-                              type="text"
-                              name="lon"
-                              placeholder="Longitude"
-                              defaultValue="77.2090"
-                              required
-                              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              if (navigator.geolocation) {
-                                navigator.geolocation.getCurrentPosition(
-                                  async (position) => {
-                                    const lat = position.coords.latitude.toString()
-                                    const lon = position.coords.longitude.toString()
-
-                                    const latInput = document.querySelector('input[name="lat"]') as HTMLInputElement
-                                    const lonInput = document.querySelector('input[name="lon"]') as HTMLInputElement
-                                    if (latInput && lonInput) {
-                                      latInput.value = lat
-                                      lonInput.value = lon
-                                    }
-
-                                    // Reverse geocoding to fill address fields
-                                    try {
-                                      const response = await fetch(
-                                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`
-                                      )
-                                      const data = await response.json()
-
-                                      if (data && data.address) {
-                                        const address = data.address
-                                        const addressInput = document.querySelector('textarea[name="address"]') as HTMLTextAreaElement
-                                        const cityInput = document.querySelector('input[name="city"]') as HTMLInputElement
-                                        const stateInput = document.querySelector('input[name="state"]') as HTMLInputElement
-                                        const zipInput = document.querySelector('input[name="zip_code"]') as HTMLInputElement
-                                        const countryInput = document.querySelector('input[name="country"]') as HTMLInputElement
-
-                                        if (addressInput) {
-                                          const fullAddress = [
-                                            address.house_number,
-                                            address.road,
-                                            address.suburb,
-                                            address.city_district
-                                          ].filter(Boolean).join(', ')
-                                          addressInput.value = fullAddress || data.display_name.split(',')[0]
-                                        }
-                                        if (cityInput) cityInput.value = address.city || address.town || address.village || ''
-                                        if (stateInput) stateInput.value = address.state || ''
-                                        if (zipInput) zipInput.value = address.postcode || ''
-                                        if (countryInput) countryInput.value = address.country || ''
-                                      }
-                                    } catch (geoError) {
-                                      console.warn("Reverse geocoding failed:", geoError)
-                                      // Location coordinates are still filled
-                                    }
-                                  },
-                                  (error) => {
-                                    console.error("Error getting location:", error)
-                                    alert("Unable to get your location. Please enter coordinates manually or allow location access.")
-                                  }
-                                )
-                              } else {
-                                alert("Geolocation is not supported by this browser.")
-                              }
-                            }}
-                            className="w-full"
-                          >
-                            Use Current Location
-                          </Button>
-                        </div> */}
-                        <Button
-                          type="submit"
-                          disabled={addingAddress}
-                          className="w-full"
-                          size="sm"
-                        >
-                          {addingAddress ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : null}
-                          Add Address
-                        </Button>
-                      </form>
+                    <div className="space-y-2">
+                      <Label htmlFor="contact_number">Contact Number *</Label>
+                      <Input
+                        id="contact_number"
+                        type="tel"
+                        placeholder="+1234567890"
+                        value={addressForm.contact_person_number}
+                        onChange={(e) => handleInputChange("contact_person_number", e.target.value)}
+                      />
                     </div>
-                  )}
-                </div>
-
-                {/* Date Selection */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Select Service Date</label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500">Choose the date when you want the service</p>
-                </div>
-
-                {/* Total */}
-                <div className="border-t pt-4">
-                  <div className="flex justify-between font-semibold">
-                    <span>Total Amount</span>
-                    <span className="text-lg">₹{totalCost}</span>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={handleProceedToPayment}
-                  disabled={!selectedDate || !selectedAddressId}
-                >
-                  Proceed to Payment
-                </Button>
+            {/* Service Address */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Service Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="address_type">Address Type</Label>
+                      <Select
+                        value={addressForm.address_type}
+                        onValueChange={(value) => handleInputChange("address_type", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="home">Home</SelectItem>
+                          <SelectItem value="office">Office</SelectItem>
+                          <SelectItem value="others">Others</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="address_label">Address Label</Label>
+                      <Input
+                        id="address_label"
+                        placeholder="e.g., Home, Office"
+                        value={addressForm.address_label}
+                        onChange={(e) => handleInputChange("address_label", e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-                <div className="text-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate("/cart")}
-                    className="w-full"
-                  >
-                    Back to Cart
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Full Address *</Label>
+                    <Textarea
+                      id="address"
+                      placeholder="Enter your complete address"
+                      value={addressForm.address}
+                      onChange={(e) => handleInputChange("address", e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="street">Street</Label>
+                      <Input
+                        id="street"
+                        placeholder="Street name"
+                        value={addressForm.street}
+                        onChange={(e) => handleInputChange("street", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="house">House/Building</Label>
+                      <Input
+                        id="house"
+                        placeholder="House number"
+                        value={addressForm.house}
+                        onChange={(e) => handleInputChange("house", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="floor">Floor</Label>
+                      <Input
+                        id="floor"
+                        placeholder="Floor number"
+                        value={addressForm.floor}
+                        onChange={(e) => handleInputChange("floor", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        placeholder="City"
+                        value={addressForm.city}
+                        onChange={(e) => handleInputChange("city", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zip_code">Zip Code</Label>
+                      <Input
+                        id="zip_code"
+                        placeholder="Zip code"
+                        value={addressForm.zip_code}
+                        onChange={(e) => handleInputChange("zip_code", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        placeholder="Country"
+                        value={addressForm.country}
+                        onChange={(e) => handleInputChange("country", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Location Coordinates *</Label>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <Input
+                        placeholder="Latitude"
+                        value={addressForm.lat}
+                        onChange={(e) => handleInputChange("lat", e.target.value)}
+                      />
+                      <Input
+                        placeholder="Longitude"
+                        value={addressForm.lon}
+                        onChange={(e) => handleInputChange("lon", e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={getCurrentLocation}
+                      disabled={gettingLocation}
+                      className="mt-2 bg-transparent"
+                    >
+                      {gettingLocation ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Getting Location...
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="w-4 h-4 mr-2" />
+                          Use Current Location
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Service Schedule */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Service Schedule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="schedule">Select Date & Time *</Label>
+                    <Input
+                      id="schedule"
+                      type="datetime-local"
+                      value={serviceSchedule}
+                      onChange={(e) => setServiceSchedule(e.target.value)}
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Payment Method */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Payment Method
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash_after_service">Cash After Service</SelectItem>
+                      <SelectItem value="digital_payment">Digital Payment</SelectItem>
+                      <SelectItem value="wallet_payment">Wallet Payment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Order Summary Sidebar */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="sticky top-8"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="flex gap-3">
+                        {item.service.thumbnail_full_path && (
+                          <img
+                            src={item.service.thumbnail_full_path || "/placeholder.svg"}
+                            alt={item.service.name}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.service.name}</p>
+                          <p className="text-xs text-gray-500">{item.variant_key}</p>
+                          <p className="text-sm text-gray-600">
+                            ₹{item.service_cost} × {item.quantity}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">₹{item.total_cost.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-medium">${calculateTotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Service Fee</span>
+                      <span className="font-medium">$0.00</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total</span>
+                      <span>${calculateTotal().toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <Button className="w-full" size="lg" onClick={handlePlaceOrder} disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Place Order"
+                    )}
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
+
+                  <p className="text-xs text-center text-gray-500">
+                    By placing this order, you agree to our terms and conditions
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   )
 }
-
-export default CheckoutPage

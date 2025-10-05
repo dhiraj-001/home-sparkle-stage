@@ -104,6 +104,7 @@ interface Category {
 }
 
 const SubcategoryServices: React.FC = () => {
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const subcategoryId = id || "";
@@ -137,7 +138,7 @@ const SubcategoryServices: React.FC = () => {
       }
 
       const response = await fetch(
-        `https://admin.sarvoclub.com/api/v1/customer/service/sub-category/${subcategoryId}?limit=12&offset=${page}`,
+        `${baseUrl}/api/v1/customer/service/sub-category/${subcategoryId}?limit=12&offset=${page}`,
         {
           method: "GET",
           headers: headers,
