@@ -5,6 +5,8 @@ import { Link } from "react-router-dom"
 import { Star, Users, Zap, Heart, ChevronLeft, ChevronRight, Search } from "lucide-react"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
+import { useToast } from "@/hooks/use-toast"
+import { toggleFavorite as toggleFavoriteApi } from "@/helpers/toggleFavorite"
 
 interface ServiceVariation {
   variant_key: string
@@ -61,6 +63,8 @@ const AllServices = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [totalServices, setTotalServices] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
+  const { toast } = useToast()
+  const authToken = localStorage.getItem("demand_token")
 
   useEffect(() => {
     fetchAllServices(currentPage)
@@ -122,6 +126,40 @@ const AllServices = () => {
       : service.thumbnail
         ? `${baseUrl}${service.thumbnail}`
         : "/customer-service-interaction.png"
+  }
+
+  const toggleServiceFavorite = async (serviceId: string) => {
+    try {
+      await toggleFavoriteApi(serviceId, authToken)
+      // Update the services state to toggle is_favorite
+      setServices(prevServices =>
+        prevServices.map(service =>
+          service.id === serviceId
+            ? { ...service, is_favorite: service.is_favorite === 1 ? 0 : 1 }
+            : service
+        )
+      )
+      const service = services.find(s => s.id === serviceId)
+      const isCurrentlyFavorite = service?.is_favorite === 1
+      toast({
+        title: isCurrentlyFavorite ? "Removed from Favorites" : "Added to Favorites",
+        description: `${service?.name} has been ${isCurrentlyFavorite ? "removed from" : "added to"} your favorites.`,
+      })
+    } catch (error) {
+      if ((error as Error).message === "Authentication required") {
+        toast({
+          title: "Authentication Required",
+          description: "Please login to add or remove favorites.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: (error as Error).message || "Failed to update favorite status. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
   }
 
   const handlePreviousPage = () => {
@@ -284,6 +322,7 @@ const AllServices = () => {
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
+                          toggleServiceFavorite(service.id)
                         }}
                         className="absolute top-4 right-4 p-2.5 bg-white/95 backdrop-blur-md rounded-full hover:bg-white transition-all duration-300 shadow-lg hover:scale-110 border border-white/50"
                       >

@@ -81,6 +81,9 @@ const CartPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set())
   const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set())
+  const [couponCode, setCouponCode] = useState("")
+  const [applyingCoupon, setApplyingCoupon] = useState(false)
+  const [removingCoupon, setRemovingCoupon] = useState(false)
   const navigate = useNavigate()
 
   const fetchCartData = async () => {
@@ -225,6 +228,105 @@ const CartPage: React.FC = () => {
         newSet.delete(itemId)
         return newSet
       })
+    }
+  }
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return
+
+    const token = localStorage.getItem("demand_token")
+    if (!token) {
+      navigate("/login")
+      return
+    }
+
+    try {
+      setApplyingCoupon(true)
+      setError(null)
+
+      const response = await fetch(
+        "https://admin.sarvoclub.com/api/v1/customer/coupon/apply",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-localization": "en",
+            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+            "Accept-Charset": "UTF-8",
+          },
+          body: JSON.stringify({
+            coupon_code: couponCode.trim(),
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.response_code === "default_200") {
+        setCouponCode("")
+        await fetchCartData() // Refresh cart data
+      } else {
+        throw new Error(data.message || "Failed to apply coupon")
+      }
+    } catch (err: any) {
+      console.error("Failed to apply coupon:", err)
+      setError(err.message || "An error occurred while applying coupon")
+    } finally {
+      setApplyingCoupon(false)
+    }
+  }
+
+  const removeCoupon = async (couponCodeToRemove: string) => {
+    const token = localStorage.getItem("demand_token")
+    if (!token) {
+      navigate("/login")
+      return
+    }
+
+    try {
+      setRemovingCoupon(true)
+      setError(null)
+
+      const response = await fetch(
+        "https://admin.sarvoclub.com/api/v1/customer/coupon/remove",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-localization": "en",
+            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+            "Accept-Charset": "UTF-8",
+          },
+          body: JSON.stringify({
+            coupon_code: couponCodeToRemove,
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.response_code === "default_200") {
+        await fetchCartData() // Refresh cart data
+      } else {
+        throw new Error(data.message || "Failed to remove coupon")
+      }
+    } catch (err: any) {
+      console.error("Failed to remove coupon:", err)
+      setError(err.message || "An error occurred while removing coupon")
+    } finally {
+      setRemovingCoupon(false)
     }
   }
 
@@ -428,6 +530,55 @@ const CartPage: React.FC = () => {
                   <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Coupon Code Section */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Coupon Code</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Enter coupon code"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        disabled={applyingCoupon}
+                      />
+                      <Button
+                        onClick={applyCoupon}
+                        disabled={applyingCoupon || !couponCode.trim()}
+                        size="sm"
+                      >
+                        {applyingCoupon ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Apply"
+                        )}
+                      </Button>
+                    </div>
+                    {/* Applied Coupons */}
+                    {cartItems.some(item => item.coupon_code) && (
+                      <div className="space-y-1">
+                        {[...new Set(cartItems.map(item => item.coupon_code).filter(code => code))].map((code) => (
+                          <div key={code} className="flex items-center justify-between bg-green-50 px-2 py-1 rounded text-sm">
+                            <span className="text-green-800 font-medium">{code}</span>
+                            {/* <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeCoupon(code)}
+                              disabled={removingCoupon}
+                              className="h-6 px-2 text-xs"
+                            >
+                              {removingCoupon ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                "Remove"
+                              )}
+                            </Button> */}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
@@ -451,7 +602,7 @@ const CartPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full" size="lg" onClick={() => navigate("/checkout")}>
                     Proceed to Checkout
                   </Button>
 

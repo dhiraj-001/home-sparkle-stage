@@ -20,7 +20,9 @@ import ServiceDetail from "./pages/Services/ServiceDetail.js";
 import CategoryChildList from "./pages/Category/CategoryDetail.js";
 import ProfilePage from "./pages/ProfilePage.js";
 import CartPage from "./pages/Cart.js";
+import CheckoutPage from "./pages/CheckoutPage.js";
 import SubcategoryServices from "./pages/Category/SubcategoryService.js";
+import FavoritesPage from "./pages/FavoritesPage.js";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +71,8 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

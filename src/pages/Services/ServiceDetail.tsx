@@ -25,6 +25,7 @@ import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { useToast } from "@/hooks/use-toast"
 import { addToCart } from "@/helpers/addtocart"
+import { toggleFavorite as toggleFavoriteApi } from "@/helpers/toggleFavorite"
 
 interface ServiceVariation {
   variant_key: string
@@ -175,9 +176,38 @@ const ServiceDetail = () => {
     return imagePath ? `${baseUrl}${imagePath}` : "/customer-service-interaction.png"
   }
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite)
-    // Here you would typically make an API call to update favorite status
+  const toggleFavorite = async () => {
+    if (!service) {
+      toast({
+        title: "Error",
+        description: "Service not loaded yet.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      await toggleFavoriteApi(service.id, authToken)
+      setIsFavorite(!isFavorite)
+      toast({
+        title: isFavorite ? "Removed from Favorites" : "Added to Favorites",
+        description: `${service.name} has been ${isFavorite ? "removed from" : "added to"} your favorites.`,
+      })
+    } catch (error) {
+      if ((error as Error).message === "Authentication required") {
+        toast({
+          title: "Authentication Required",
+          description: "Please login to add or remove favorites.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: (error as Error).message || "Failed to update favorite status. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
   }
 
   const renderHTML = (htmlString: string) => {
