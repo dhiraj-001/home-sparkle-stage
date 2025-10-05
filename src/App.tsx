@@ -20,6 +20,7 @@ import ServiceDetail from "./pages/Services/ServiceDetail.js";
 import CategoryChildList from "./pages/Category/CategoryDetail.js";
 import ProfilePage from "./pages/ProfilePage.js";
 import CartPage from "./pages/Cart.js";
+import SubcategoryServices from "./pages/Category/SubcategoryService.js";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/category/:id" element={<CategoryChildList  />} />
+            <Route path="/subcategory/:id/services" element={<SubcategoryServices />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/otp-verification" element={<OtpVerification />} />

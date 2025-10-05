@@ -141,17 +141,18 @@ const CartPage: React.FC = () => {
       setUpdatingItems(prev => new Set(prev).add(itemId))
 
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/cart/update",
+        `https://admin.sarvoclub.com/api/v1/customer/cart/update-quantity/${itemId}`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             "X-localization": "en",
             zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+            "Accept-Charset": "UTF-8",
           },
           body: JSON.stringify({
-            cart_id: itemId,
             quantity: newQuantity,
           }),
         }
@@ -162,8 +163,8 @@ const CartPage: React.FC = () => {
       }
 
       const data = await response.json()
-      
-      if (data.response_code === "default_200") {
+
+      if (data.response_code === "default_update_200") {
         await fetchCartData() // Refresh cart data
       } else {
         throw new Error(data.message || "Failed to update quantity")
@@ -191,18 +192,16 @@ const CartPage: React.FC = () => {
       setDeletingItems(prev => new Set(prev).add(itemId))
 
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/cart/remove",
+        `https://admin.sarvoclub.com/api/v1/customer/cart/remove/${itemId}`,
         {
-          method: "POST",
+          method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
             "X-localization": "en",
             zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+            "Accept-Charset": "UTF-8",
           },
-          body: JSON.stringify({
-            cart_id: itemId,
-          }),
         }
       )
 
@@ -211,8 +210,8 @@ const CartPage: React.FC = () => {
       }
 
       const data = await response.json()
-      
-      if (data.response_code === "default_200") {
+
+      if (data.response_code === "default_delete_200") {
         await fetchCartData() // Refresh cart data
       } else {
         throw new Error(data.message || "Failed to remove item")
