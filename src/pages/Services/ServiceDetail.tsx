@@ -17,9 +17,14 @@ import {
   ChevronRight,
   HelpCircle,
   Sparkles,
+  Plus,
+  Minus,
+  ShoppingCart,
 } from "lucide-react"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
+import { useToast } from "@/hooks/use-toast"
+import { addToCart } from "@/helpers/addtocart"
 
 interface ServiceVariation {
   variant_key: string
@@ -96,7 +101,10 @@ const ServiceDetail = () => {
   const [error, setError] = useState<string | null>(null)
   const [selectedVariation, setSelectedVariation] = useState<ServiceVariation | null>(null)
   const [isFavorite, setIsFavorite] = useState(false)
-  const authToken = localStorage.getItem("auth_token")
+  const [quantity, setQuantity] = useState(1)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const { toast } = useToast()
+  const authToken = localStorage.getItem("demand_token")
 
   useEffect(() => {
     if (id) {
@@ -134,7 +142,7 @@ const ServiceDetail = () => {
       })
 
       const data: any = await response.json()
-
+      console.log(data)
       if (data.response_code === "default_200" && data.content) {
         setService(data.content)
         setIsFavorite(data.content.is_favorite === 1)
@@ -196,6 +204,62 @@ const ServiceDetail = () => {
     const startDate = new Date(discount.start_date)
     const endDate = new Date(discount.end_date)
     return now >= startDate && now <= endDate
+  }
+
+  const handleAddToCart = async () => {
+    if (!service || !selectedVariation) {
+      toast({
+        title: "Error",
+        description: "Please select a service option",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsAddingToCart(true)
+
+    try {
+      const result = await addToCart({
+        serviceId: service.id,
+        categoryId: service.category_id,
+        subCategoryId: service.sub_category_id,
+        variantKey: selectedVariation.variant_key,
+        quantity: quantity,
+        authToken: authToken || undefined,
+        guestId: authToken ? undefined : "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+      })
+
+      if (result.success) {
+        toast({
+          title: "Added to Cart!",
+          description: `${service.name} (${selectedVariation.variant_name}) has been added to your cart.`,
+        })
+        // Reset quantity after successful add
+        setQuantity(1)
+      } else {
+        toast({
+          title: "Failed to Add",
+          description: result.error || "Could not add item to cart. Please try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
+
+  const incrementQuantity = () => {
+    setQuantity((prev) => prev + 1)
+  }
+
+  const decrementQuantity = () => {
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1))
   }
 
   if (loading) {
@@ -264,7 +328,10 @@ const ServiceDetail = () => {
               Home
             </button>
             <ChevronRight className="w-4 h-4" />
-            <button onClick={() => navigate("/allservices")} className="hover:text-gray-900 transition-colors font-medium">
+            <button
+              onClick={() => navigate("/allservices")}
+              className="hover:text-gray-900 transition-colors font-medium"
+            >
               Services
             </button>
             {service.category && (
@@ -463,8 +530,42 @@ const ServiceDetail = () => {
                 )}
               </div>
 
-              <button className="w-full py-4 bg-blue-500 text-white rounded-xl font-semibold text-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md">
-                Book This Service
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quantity</h3>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={decrementQuantity}
+                    disabled={quantity <= 1}
+                    className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Minus className="w-5 h-5 text-gray-700" />
+                  </button>
+                  <span className="text-2xl font-semibold text-gray-900 min-w-[3rem] text-center">{quantity}</span>
+                  <button
+                    onClick={incrementQuantity}
+                    className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    <Plus className="w-5 h-5 text-gray-700" />
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart || !selectedVariation}
+                className="w-full py-4 bg-blue-500 text-white rounded-xl font-semibold text-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isAddingToCart ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Adding to Cart...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-5 h-5" />
+                    Add to Cart
+                  </>
+                )}
               </button>
 
               <div className="grid grid-cols-3 gap-4">

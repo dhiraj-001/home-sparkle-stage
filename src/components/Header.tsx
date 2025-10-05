@@ -181,9 +181,9 @@ const Header = () => {
 
           {/* Right Section */}
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
+            <Link to="/cart" className="hidden sm:flex">
               <ShoppingCart className="w-5 h-5" />
-            </Button>
+            </Link>
             <Link to="/login">
               <User className="w-5 h-5" />
             </Link>

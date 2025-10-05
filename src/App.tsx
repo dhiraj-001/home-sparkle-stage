@@ -19,6 +19,7 @@ import AllServices from "./pages/Services/AllServices.js";
 import ServiceDetail from "./pages/Services/ServiceDetail.js";
 import CategoryChildList from "./pages/Category/CategoryDetail.js";
 import ProfilePage from "./pages/ProfilePage.js";
+import CartPage from "./pages/Cart.js";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => {
             <Route path="/otp-verification" element={<OtpVerification />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/cart" element={<CartPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
