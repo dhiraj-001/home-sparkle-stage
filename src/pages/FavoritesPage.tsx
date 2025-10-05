@@ -7,6 +7,7 @@ import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { useToast } from "@/hooks/use-toast"
 import { toggleFavorite as toggleFavoriteApi } from "@/helpers/toggleFavorite"
+import { addToCart } from "@/helpers/addtocart"
 
 interface ServiceVariation {
   variant_key: string
@@ -37,14 +38,61 @@ interface Service {
   }
   created_at: string
   updated_at: string
+  thumbnail_full_path: string
+  cover_image_full_path: string
+  category: {
+    id: string
+    name: string
+    image_full_path: string
+  }
+  variations: Array<{
+    id: number
+    variant: string
+    variant_key: string
+    price: number
+  }>
+  service_discount: any[]
+  campaign_discount: Array<{
+    id: number
+    discount: {
+      discount_title: string
+      discount_amount: number
+      discount_amount_type: string
+    }
+  }>
+  translations: Array<{
+    id: number
+    translationable_type: string
+    translationable_id: string
+    locale: string
+    key: string
+    value: string
+  }>
 }
 
 interface FavoritesResponse {
   response_code: string
   message: string
   content: {
+    current_page: number
     data: Service[]
+    first_page_url: string
+    from: number
+    last_page: number
+    last_page_url: string
+    links: Array<{
+      url: string | null
+      label: string
+      active: boolean
+    }>
+    next_page_url: string | null
+    path: string
+    per_page: number
+    prev_page_url: string | null
+    to: number
+    total: number
   }
+  errors: any[]
 }
 
 const FavoritesPage = () => {
@@ -73,17 +121,25 @@ const FavoritesPage = () => {
       const response = await fetch(`${baseUrl}/api/v1/customer/favorite/service-list?offset=1&limit=100`, {
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${authToken}`,
+          "Accept": "application/json",
+          "Authorization": `Bearer ${authToken}`,
+          "zoneId": "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+          "X-localization": "en",
+          "guest_id": "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
         },
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data: FavoritesResponse = await response.json()
 
-      if (data.response_code === "default_200" && data.content) {
+      // Check if response code contains "200" for success
+      if (data.response_code?.includes("200") && data.content?.data) {
         setServices(data.content.data)
       } else {
-        throw new Error("Failed to fetch favorites")
+        throw new Error(data.message || "Failed to fetch favorites")
       }
     } catch (err) {
       console.error("Error fetching favorites:", err)
@@ -98,7 +154,7 @@ const FavoritesPage = () => {
     if (variations && variations.length > 0) {
       return Math.min(...variations.map((v) => v.price))
     }
-    return service.variations_app_format?.default_price || Number.parseInt(service.min_bidding_price) || 0
+    return service.variations_app_format?.default_price || Number.parseFloat(service.min_bidding_price) || 0
   }
 
   const formatPrice = (price: number) => {
@@ -110,6 +166,15 @@ const FavoritesPage = () => {
   }
 
   const getImageUrl = (service: Service) => {
+    // Use the full path URLs from the response first
+    if (service.cover_image_full_path) {
+      return service.cover_image_full_path
+    }
+    if (service.thumbnail_full_path) {
+      return service.thumbnail_full_path
+    }
+    
+    // Fallback to constructing the URL from the image names
     const baseUrl = (import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com") + "/storage/app/public/service/"
     return service.cover_image
       ? `${baseUrl}${service.cover_image}`
@@ -119,6 +184,15 @@ const FavoritesPage = () => {
   }
 
   const toggleServiceFavorite = async (serviceId: string) => {
+    if (!authToken) {
+      toast({
+        title: "Authentication Required",
+        description: "Please login to manage favorites.",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       await toggleFavoriteApi(serviceId, authToken)
       // Remove from favorites list
@@ -132,6 +206,42 @@ const FavoritesPage = () => {
       toast({
         title: "Error",
         description: (error as Error).message || "Failed to update favorite status. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleAddToCart = async (service: Service) => {
+    if (!authToken) {
+      toast({
+        title: "Authentication Required",
+        description: "Please login to add items to cart.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // For simplicity, add quantity 1 and use first variant key if available
+    const variantKey = service.variations_app_format?.zone_wise_variations?.[0]?.variant_key || ""
+
+    const result = await addToCart({
+      serviceId: service.id,
+      categoryId: service.category_id,
+      subCategoryId: service.sub_category_id,
+      variantKey: variantKey,
+      quantity: 1,
+      authToken: authToken || undefined,
+    })
+
+    if (result.success) {
+      toast({
+        title: "Added to Cart",
+        description: `${service.name} has been added to your cart.`,
+      })
+    } else {
+      toast({
+        title: "Error",
+        description: result.error || "Failed to add item to cart. Please try again.",
         variant: "destructive",
       })
     }
@@ -273,98 +383,141 @@ const FavoritesPage = () => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
-              {filteredServices.map((service) => (
-                <Link
-                  key={service.id}
-                  to={`/service/${service.id}`}
-                  className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2 border border-white/50"
-                >
-                  <div className="relative h-56 overflow-hidden">
-                    <img
-                      src={getImageUrl(service) || "/placeholder.svg"}
-                      alt={service.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+  {filteredServices.map((service) => (
+    <div
+      key={service.id}
+      className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-blue-200 hover:-translate-y-2"
+    >
+      {/* Image Section */}
+      <div className="relative h-48 overflow-hidden">
+        <img
+          src={getImageUrl(service) || "/placeholder.svg"}
+          alt={service.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        
+        {/* Top Badges */}
+        <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+          <div className="flex flex-col gap-2">
+            {service.is_active === 1 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-500 text-white shadow-lg backdrop-blur-sm">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                Active
+              </span>
+            )}
+            {service.variations_app_format?.zone_wise_variations?.length > 1 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white shadow-lg">
+                <Zap className="w-3 h-3" />
+                {service.variations_app_format.zone_wise_variations.length} options
+              </span>
+            )}
+          </div>
+          
+          {/* Favorite Button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              toggleServiceFavorite(service.id)
+            }}
+            className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-300 shadow-lg hover:scale-110 hover:shadow-xl"
+          >
+            <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+          </button>
+        </div>
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
-
-                    {service.is_active === 1 && (
-                      <div className="absolute top-4 left-4">
-                        <div className="bg-green-500/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-lg">
-                          Active
-                        </div>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        toggleServiceFavorite(service.id)
-                      }}
-                      className="absolute top-4 right-4 p-2.5 bg-white/95 backdrop-blur-md rounded-full hover:bg-white transition-all duration-300 shadow-lg hover:scale-110 border border-white/50"
-                    >
-                      <Heart
-                        className={`w-4 h-4 transition-all duration-300 fill-red-500 text-red-500 scale-110`}
-                      />
-                    </button>
-
-                    {service.order_count > 0 && (
-                      <div className="absolute bottom-4 left-4">
-                        <div className="flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>{service.order_count}+ orders</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:bg-clip-text transition-all duration-300 text-lg">
-                      {service.name}
-                    </h3>
-
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-                      {service.short_description}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-bold text-gray-900">
-                            {service.avg_rating > 0 ? service.avg_rating.toFixed(1) : "New"}
-                          </span>
-                        </div>
-                        {service.rating_count > 0 && (
-                          <span className="text-xs text-gray-500 font-medium">({service.rating_count})</span>
-                        )}
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                          {formatPrice(getStartingPrice(service))}
-                        </div>
-                        <div className="text-xs text-gray-500 font-medium">starting price</div>
-                      </div>
-                    </div>
-
-                    {service.variations_app_format?.zone_wise_variations &&
-                      service.variations_app_format.zone_wise_variations.length > 1 && (
-                        <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
-                          <Zap className="w-3 h-3" />
-                          <span className="font-medium">
-                            {service.variations_app_format.zone_wise_variations.length} options available
-                          </span>
-                        </div>
-                      )}
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
-                </Link>
-              ))}
+        {/* Bottom Info Overlay */}
+        <div className="absolute bottom-3 left-3 right-3">
+          <div className="flex justify-between items-end">
+            {service.order_count > 0 && (
+              <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold text-white">
+                <Users className="w-3.5 h-3.5" />
+                <span>{service.order_count}+ orders</span>
+              </div>
+            )}
+            
+            {/* Rating */}
+            <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold text-white">
+              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+              <span>{service.avg_rating > 0 ? service.avg_rating.toFixed(1) : "New"}</span>
+              {service.rating_count > 0 && (
+                <span className="text-white/70">({service.rating_count})</span>
+              )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="p-5">
+        {/* Title */}
+        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 text-lg leading-tight group-hover:text-blue-600 transition-colors duration-300">
+          {service.name}
+        </h3>
+
+        {/* Description */}
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+          {service.short_description}
+        </p>
+
+        {/* Price and Action Section */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex flex-col">
+            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {formatPrice(getStartingPrice(service))}
+            </div>
+            <div className="text-xs text-gray-500 font-medium">starting price</div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Link 
+              to={`/service/${service.id}`}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-300 hover:scale-105 text-sm"
+            >
+              View
+            </Link>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleAddToCart(service)
+              }}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 hover:scale-105 shadow-lg text-sm"
+            >
+              Add to Cart
+            </button>
+          </div>
+        </div>
+
+        {/* Additional Info */}
+        {service.campaign_discount?.length > 0 && (
+          <div className="mt-3 flex items-center gap-2 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg px-3 py-2">
+            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <span className="text-xs font-semibold text-amber-700">
+              {service.campaign_discount[0].discount.discount_amount_type === 'percentage' 
+                ? `${service.campaign_discount[0].discount.discount_amount}% OFF`
+                : `${formatPrice(service.campaign_discount[0].discount.discount_amount)} OFF`
+              }
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Hover Effect Border */}
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-500/30 rounded-2xl transition-colors duration-300 pointer-events-none" />
+      
+      {/* Shine Effect on Hover */}
+      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden">
+        <div className="absolute -inset-full top-0 skew-x-12 group-hover:animate-shine group-hover:bg-gradient-to-r group-hover:from-transparent group-hover:via-white/20 group-hover:to-transparent" />
+      </div>
+    </div>
+  ))}
+</div>
           )}
         </div>
       </div>

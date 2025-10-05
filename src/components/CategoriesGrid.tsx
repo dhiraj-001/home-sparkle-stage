@@ -225,7 +225,7 @@ const CategoriesGrid = () => {
   }
 
   return (
-    <section ref={sectionRef} className="py-12 md:py-20 bg-background">
+    <section ref={sectionRef} id="categories" className="py-12 md:py-20 bg-background">
       <div className="container mx-auto px-4 md:px-6">
         {/* Header with left-aligned heading and right-aligned button */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 md:mb-12 gap-4">

@@ -60,11 +60,11 @@ const Hero = () => {
   </div>
 </div>
             {/* CTA Button */}
-            <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            {/* <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               <button className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors duration-300 shadow-lg hover:shadow-xl">
                 Book a Service Now
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Right Side: Image Grid */}

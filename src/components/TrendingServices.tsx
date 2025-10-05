@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Star,
   Users,
@@ -144,6 +144,15 @@ const TrendingServices = () => {
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { toast } = useToast();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash === '#trending') {
+      setTimeout(() => {
+        document.getElementById('trending')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [location]);
 
   useEffect(() => {
     fetchTrendingServices();
@@ -370,6 +379,7 @@ const TrendingServices = () => {
         whileInView="visible"
         viewport={{ once: true, amount: 0.3 }}
         variants={containerVariants}
+        id="trending"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl animate-pulse" />
