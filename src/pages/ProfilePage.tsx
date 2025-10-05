@@ -1,206 +1,348 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+import type React from "react";
+
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 interface User {
-  id: string
-  first_name: string
-  last_name: string
-  email: string
-  phone: string
-  gender: string | null
-  profile_image: string | null
-  profile_image_full_path: string | null
-  is_phone_verified: number
-  is_email_verified: number
-  wallet_balance: number
-  loyalty_point: number
-  ref_code: string | null
-  bookings_count: number
-  created_at: string
-  date_of_birth: string | null
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  gender: string | null;
+  profile_image: string | null;
+  profile_image_full_path: string | null;
+  is_phone_verified: number;
+  is_email_verified: number;
+  wallet_balance: number;
+  loyalty_point: number;
+  ref_code: string | null;
+  bookings_count: number;
+  created_at: string;
+  date_of_birth: string | null;
 }
 
 interface Discount {
-  id: string
-  discount_title: string
-  discount_type: string
-  discount_amount: number
-  discount_amount_type: string
-  min_purchase: number
-  max_discount_amount: number
-  limit_per_user: number
-  start_date: string
-  end_date: string
+  id: string;
+  discount_title: string;
+  discount_type: string;
+  discount_amount: number;
+  discount_amount_type: string;
+  min_purchase: number;
+  max_discount_amount: number;
+  limit_per_user: number;
+  start_date: string;
+  end_date: string;
 }
 
 interface Coupon {
-  id: string
-  coupon_type: string
-  coupon_code: string
-  discount_id: string
-  is_active: number
-  created_at: string
-  discount: Discount
+  id: string;
+  coupon_type: string;
+  coupon_code: string;
+  discount_id: string;
+  is_active: number;
+  created_at: string;
+  discount: Discount;
 }
 
 interface CouponsData {
   active_coupons: {
-    data: Coupon[]
-  }
+    data: Coupon[];
+  };
   expired_coupons: {
-    data: Coupon[]
-  }
+    data: Coupon[];
+  };
 }
 
 const ProfilePage = () => {
-  const [user, setUser] = useState<User | null>(null)
-  const [coupons, setCoupons] = useState<CouponsData | null>(null)
-  const [loadingCoupons, setLoadingCoupons] = useState(true)
-  const [activeTab, setActiveTab] = useState<"active" | "expired">("active")
-  const [copiedCode, setCopiedCode] = useState<string | null>(null)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [user, setUser] = useState<User | null>(null);
+  const [coupons, setCoupons] = useState<CouponsData | null>(null);
+  const [loadingCoupons, setLoadingCoupons] = useState(true);
+  const [activeTab, setActiveTab] = useState<"active" | "expired">("active");
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    identification_type: "nid",
+    identification_number: "",
+    date_of_birth: "",
+    gender: "male",
+  });
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem("demand_token")
-      if (!token) {
-        navigate("/login")
-        return
-      }
+  const fetchUserData = async () => {
+    const token = localStorage.getItem("demand_token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-      try {
-        const response = await fetch("https://admin.sarvoclub.com/api/v1/customer/info", {
+    try {
+      const response = await fetch(
+        "https://admin.sarvoclub.com/api/v1/customer/info",
+        {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.response_code === "default_200" && data.content) {
-            setUser(data.content)
-          } else {
-            throw new Error("Invalid API response")
-          }
-        } else {
-          localStorage.removeItem("demand_token")
-          navigate("/login")
         }
-      } catch (error) {
-        console.error("Failed to fetch user data:", error)
-        localStorage.removeItem("demand_token")
-        navigate("/login")
-      }
-    }
+      );
 
-    fetchUserData()
-  }, [navigate])
+      if (response.ok) {
+        const data = await response.json();
+        if (data.response_code === "default_200" && data.content) {
+          setUser(data.content);
+          // Update form data with current user data
+          setFormData({
+            first_name: data.content.first_name || "",
+            last_name: data.content.last_name || "",
+            email: data.content.email || "",
+            phone: data.content.phone || "",
+            identification_type: "nid",
+            identification_number: data.content.identification_number || "",
+            date_of_birth: data.content.date_of_birth || "",
+            gender: data.content.gender || "male",
+          });
+        } else {
+          throw new Error("Invalid API response");
+        }
+      } else {
+        localStorage.removeItem("demand_token");
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+      localStorage.removeItem("demand_token");
+      navigate("/login");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, [navigate]);
 
   useEffect(() => {
     const fetchCoupons = async () => {
       try {
-        const response = await fetch("https://admin.sarvoclub.com/api/v1/customer/coupon?limit=100&offset=1", {
-          headers: {
-            "Content-Type": "application/json",
-            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-            "X-localization": "en",
-            guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-            "Accept-Charset": "UTF-8",
-          },
-        })
+        const response = await fetch(
+          "https://admin.sarvoclub.com/api/v1/customer/coupon?limit=100&offset=1",
+          {
+            headers: {
+              "Content-Type": "application/json",
+              zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+              "X-localization": "en",
+              guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
+              "Accept-Charset": "UTF-8",
+            },
+          }
+        );
 
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           if (data.response_code === "default_200" && data.content) {
-            setCoupons(data.content)
+            setCoupons(data.content);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch coupons:", error)
+        console.error("Failed to fetch coupons:", error);
       } finally {
-        setLoadingCoupons(false)
+        setLoadingCoupons(false);
       }
-    }
+    };
 
-    fetchCoupons()
-  }, [])
+    fetchCoupons();
+  }, []);
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("demand_token")
+    const token = localStorage.getItem("demand_token");
     if (!token) {
-      navigate("/login")
-      return
+      navigate("/login");
+      return;
     }
 
     try {
-      const response = await fetch("https://admin.sarvoclub.com/api/v1/customer/auth/logout", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetch(
+        "https://admin.sarvoclub.com/api/v1/customer/auth/logout",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
-        localStorage.removeItem("demand_token")
-        navigate("/")
+        localStorage.removeItem("demand_token");
+        navigate("/");
       } else {
-        console.error("Logout failed")
+        console.error("Logout failed");
       }
     } catch (error) {
-      console.error("Logout failed:", error)
+      console.error("Logout failed:", error);
     }
-  }
+  };
 
   const handleDeleteAccount = async () => {
-    const token = localStorage.getItem("demand_token")
+    const token = localStorage.getItem("demand_token");
     if (!token) {
-      navigate("/login")
-      return
+      navigate("/login");
+      return;
     }
 
-    setDeleteLoading(true)
-    setDeleteError(null)
+    setDeleteLoading(true);
+    setDeleteError(null);
 
     try {
-      const response = await fetch("https://admin.sarvoclub.com/api/v1/customer/remove-account", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetch(
+        "https://admin.sarvoclub.com/api/v1/customer/remove-account",
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
-        localStorage.removeItem("demand_token")
-        navigate("/")
+        localStorage.removeItem("demand_token");
+        navigate("/");
       } else {
-        const data = await response.json()
-        setDeleteError(data.message || "Failed to delete account. Please try again.")
+        const data = await response.json();
+        setDeleteError(
+          data.message || "Failed to delete account. Please try again."
+        );
       }
     } catch (error) {
-      console.error("Delete account failed:", error)
-      setDeleteError("An error occurred. Please try again later.")
+      console.error("Delete account failed:", error);
+      setDeleteError("An error occurred. Please try again later.");
     } finally {
-      setDeleteLoading(false)
+      setDeleteLoading(false);
     }
-  }
+  };
+
+  const handleEditProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem("demand_token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    setEditLoading(true);
+    setEditError(null);
+    setEditSuccess(false);
+
+    try {
+      const body = new FormData();
+      body.append("first_name", formData.first_name);
+      body.append("last_name", formData.last_name);
+      body.append("email", formData.email);
+      body.append("phone", formData.phone);
+      body.append("identification_type", formData.identification_type);
+      body.append(
+        "identification_number",
+        formData.identification_number || ""
+      );
+      body.append("date_of_birth", formData.date_of_birth || "");
+      body.append("gender", formData.gender);
+      if (profileImage) {
+        body.append("profile_image", profileImage);
+      }
+      body.append("_method", "PUT");
+
+      const response = await fetch(
+        "https://admin.sarvoclub.com/api/v1/customer/update/profile",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+            "X-localization": "en",
+          },
+          body: body,
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.response_code === "default_update_200") {
+        setEditSuccess(true);
+        await fetchUserData(); // Refresh profile data
+        setTimeout(() => {
+          setShowEditModal(false);
+          setEditSuccess(false);
+          setProfileImage(null); // reset image
+          setImagePreview(null); // reset preview
+        }, 1500);
+      } else {
+        setEditError(
+          data.message || "Failed to update profile. Please try again."
+        );
+      }
+    } catch (error) {
+      console.error("Update profile failed:", error);
+      setEditError("An error occurred. Please try again later.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openEditModal = () => {
+    setShowEditModal(true);
+    setEditError(null);
+    setEditSuccess(false);
+    setFormData({
+      first_name: user?.first_name || "",
+      last_name: user?.last_name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      identification_type: "nid",
+      identification_number: user?.identification_number || "",
+      date_of_birth: user?.date_of_birth || "",
+      gender: user?.gender || "male",
+    });
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-  }
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   const copyCouponCode = (code: string) => {
-    navigator.clipboard.writeText(code)
-    setCopiedCode(code)
-    setTimeout(() => setCopiedCode(null), 2000)
-  }
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
 
   if (!user) {
     return (
@@ -214,7 +356,7 @@ const ProfilePage = () => {
         </div>
         <Footer />
       </div>
-    )
+    );
   }
 
   return (
@@ -230,7 +372,9 @@ const ProfilePage = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center text-white">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">My Profile</h1>
-            <p className="text-white/90 text-lg">Manage your account and preferences</p>
+            <p className="text-white/90 text-lg">
+              Manage your account and preferences
+            </p>
           </div>
         </div>
       </div>
@@ -248,9 +392,7 @@ const ProfilePage = () => {
                   className="w-full h-full rounded-full object-cover bg-white"
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-gray-700 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                {user.gender || "N/A"}
-              </div>
+              
             </div>
 
             {/* Profile Info */}
@@ -260,7 +402,12 @@ const ProfilePage = () => {
               </h2>
               <div className="space-y-2 text-gray-600">
                 <div className="flex items-center justify-center md:justify-start gap-2">
-                  <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -276,7 +423,12 @@ const ProfilePage = () => {
                   )}
                 </div>
                 <div className="flex items-center justify-center md:justify-start gap-2">
-                  <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -292,7 +444,12 @@ const ProfilePage = () => {
                   )}
                 </div>
                 <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
-                  <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -308,9 +465,15 @@ const ProfilePage = () => {
             {/* Referral Code */}
             {user.ref_code && (
               <div className="bg-gray-100 rounded-2xl p-6 text-center border border-gray-200">
-                <p className="text-sm text-indigo-600 mb-2">Your Referral Code</p>
-                <p className="text-2xl font-bold text-gray-900">{user.ref_code}</p>
-                <button className="mt-3 text-xs text-gray-700 hover:text-blue-900 font-medium">Copy Code</button>
+                <p className="text-sm text-indigo-600 mb-2">
+                  Your Referral Code
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {user.ref_code}
+                </p>
+                <button className="mt-3 text-xs text-gray-700 hover:text-blue-900 font-medium">
+                  Copy Code
+                </button>
               </div>
             )}
           </div>
@@ -318,7 +481,12 @@ const ProfilePage = () => {
           {/* Verification Status */}
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 mb-8">
             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-6 h-6 text-gray-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -332,22 +500,48 @@ const ProfilePage = () => {
               <div className="flex items-center justify-between p-4 bg-white rounded-xl">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${user.is_phone_verified === 1 ? "bg-green-100" : "bg-red-100"}`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      user.is_phone_verified === 1
+                        ? "bg-green-100"
+                        : "bg-red-100"
+                    }`}
                   >
                     {user.is_phone_verified === 1 ? (
-                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-6 h-6 text-green-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-6 h-6 text-red-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800">Phone Number</p>
                     <p className="text-sm text-gray-500">
-                      {user.is_phone_verified === 1 ? "Verified" : "Not Verified"}
+                      {user.is_phone_verified === 1
+                        ? "Verified"
+                        : "Not Verified"}
                     </p>
                   </div>
                 </div>
@@ -355,22 +549,48 @@ const ProfilePage = () => {
               <div className="flex items-center justify-between p-4 bg-white rounded-xl">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${user.is_email_verified === 1 ? "bg-green-100" : "bg-red-100"}`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      user.is_email_verified === 1
+                        ? "bg-green-100"
+                        : "bg-red-100"
+                    }`}
                   >
                     {user.is_email_verified === 1 ? (
-                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-6 h-6 text-green-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-6 h-6 text-red-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800">Email Address</p>
                     <p className="text-sm text-gray-500">
-                      {user.is_email_verified === 1 ? "Verified" : "Not Verified"}
+                      {user.is_email_verified === 1
+                        ? "Verified"
+                        : "Not Verified"}
                     </p>
                   </div>
                 </div>
@@ -380,8 +600,16 @@ const ProfilePage = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              onClick={openEditModal}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -395,7 +623,12 @@ const ProfilePage = () => {
               onClick={handleLogout}
               className="flex-1 bg-white border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -414,7 +647,12 @@ const ProfilePage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -424,33 +662,51 @@ const ProfilePage = () => {
                 </svg>
               </div>
             </div>
-            <p className="text-gray-600 text-sm font-medium mb-1">Wallet Balance</p>
-            <p className="text-3xl font-bold text-gray-900">₹{user.wallet_balance}</p>
+            <p className="text-gray-600 text-sm font-medium mb-1">
+              Wallet Balance
+            </p>
+            <p className="text-3xl font-bold text-gray-900">
+              ₹{user.wallet_balance}
+            </p>
           </div>
 
           {/* Loyalty Points */}
           <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
                   />
                 </svg>
               </div>
             </div>
-            <p className="text-gray-600 text-sm font-medium mb-1">Loyalty Points</p>
-            <p className="text-3xl font-bold text-gray-900">{user.loyalty_point}</p>
+            <p className="text-gray-600 text-sm font-medium mb-1">
+              Loyalty Points
+            </p>
+            <p className="text-3xl font-bold text-gray-900">
+              {user.loyalty_point}
+            </p>
           </div>
 
           {/* Bookings */}
           <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -460,15 +716,24 @@ const ProfilePage = () => {
                 </svg>
               </div>
             </div>
-            <p className="text-gray-600 text-sm font-medium mb-1">Total Bookings</p>
-            <p className="text-3xl font-bold text-gray-900">{user.bookings_count}</p>
+            <p className="text-gray-600 text-sm font-medium mb-1">
+              Total Bookings
+            </p>
+            <p className="text-3xl font-bold text-gray-900">
+              {user.bookings_count}
+            </p>
           </div>
 
           {/* Account Status */}
           <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -478,7 +743,9 @@ const ProfilePage = () => {
                 </svg>
               </div>
             </div>
-            <p className="text-gray-600 text-sm font-medium mb-1">Account Status</p>
+            <p className="text-gray-600 text-sm font-medium mb-1">
+              Account Status
+            </p>
             <p className="text-3xl font-bold text-gray-900">Active</p>
           </div>
         </div>
@@ -487,7 +754,12 @@ const ProfilePage = () => {
         <div className="bg-white rounded-3xl shadow-2xl p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <svg className="w-7 h-7 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-7 h-7 text-gray-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -495,7 +767,7 @@ const ProfilePage = () => {
                   d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
                 />
               </svg>
-              My Coupons
+              MyCoupons
             </h3>
           </div>
 
@@ -509,7 +781,7 @@ const ProfilePage = () => {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Active Coupons
+              ActiveCoupons
               {coupons && coupons.active_coupons.data.length > 0 && (
                 <span className="ml-2 bg-gray-900 text-white text-xs px-2 py-0.5 rounded-full">
                   {coupons.active_coupons.data.length}
@@ -524,7 +796,7 @@ const ProfilePage = () => {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Expired Coupons
+              ExpiredCoupons
               {coupons && coupons.expired_coupons.data.length > 0 && (
                 <span className="ml-2 bg-gray-400 text-white text-xs px-2 py-0.5 rounded-full">
                   {coupons.expired_coupons.data.length}
@@ -544,7 +816,12 @@ const ProfilePage = () => {
                 coupons?.active_coupons.data.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-10 h-10 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -553,8 +830,12 @@ const ProfilePage = () => {
                         />
                       </svg>
                     </div>
-                    <p className="text-gray-500 text-lg font-medium">No active coupons available</p>
-                    <p className="text-gray-400 text-sm mt-2">Check back later for new offers</p>
+                    <p className="text-gray-500 text-lg font-medium">
+                      No active coupons available
+                    </p>
+                    <p className="text-gray-400 text-sm mt-2">
+                      Check back later for new offers
+                    </p>
                   </div>
                 ) : (
                   coupons?.active_coupons.data.map((coupon) => (
@@ -588,7 +869,12 @@ const ProfilePage = () => {
                                   />
                                 </svg>
                               ) : (
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
                                   <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -602,10 +888,17 @@ const ProfilePage = () => {
                               {coupon.coupon_type.replace("_", " ")}
                             </span>
                           </div>
-                          <h4 className="text-xl font-bold text-gray-900 mb-2">{coupon.discount.discount_title}</h4>
+                          <h4 className="text-xl font-bold text-gray-900 mb-2">
+                            {coupon.discount.discount_title}
+                          </h4>
                           <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
@@ -615,11 +908,19 @@ const ProfilePage = () => {
                               </svg>
                               <span>
                                 {coupon.discount.discount_amount}
-                                {coupon.discount.discount_amount_type === "percent" ? "% OFF" : " OFF"}
+                                {coupon.discount.discount_amount_type ===
+                                "percent"
+                                  ? "% OFF"
+                                  : " OFF"}
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
@@ -630,7 +931,12 @@ const ProfilePage = () => {
                               <span>Min: ₹{coupon.discount.min_purchase}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
@@ -638,15 +944,23 @@ const ProfilePage = () => {
                                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                               </svg>
-                              <span>Max: ₹{coupon.discount.max_discount_amount}</span>
+                              <span>
+                                Max: ₹{coupon.discount.max_discount_amount}
+                              </span>
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm text-gray-500 mb-1">Valid until</div>
-                          <div className="text-lg font-bold text-gray-900">{formatDate(coupon.discount.end_date)}</div>
+                          <div className="text-sm text-gray-500 mb-1">
+                            Valid until
+                          </div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {formatDate(coupon.discount.end_date)}
+                          </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            {coupon.discount.limit_per_user} use{coupon.discount.limit_per_user > 1 ? "s" : ""} per user
+                            {coupon.discount.limit_per_user} use
+                            {coupon.discount.limit_per_user > 1 ? "s" : ""} per
+                            user
                           </div>
                         </div>
                       </div>
@@ -656,7 +970,12 @@ const ProfilePage = () => {
               ) : coupons?.expired_coupons.data.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-10 h-10 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -665,8 +984,12 @@ const ProfilePage = () => {
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-500 text-lg font-medium">No expired coupons</p>
-                  <p className="text-gray-400 text-sm mt-2">Your expired coupons will appear here</p>
+                  <p className="text-gray-500 text-lg font-medium">
+                    No expired coupons
+                  </p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Your expired coupons will appear here
+                  </p>
                 </div>
               ) : (
                 coupons?.expired_coupons.data.map((coupon) => (
@@ -687,10 +1010,17 @@ const ProfilePage = () => {
                             {coupon.coupon_type.replace("_", " ")}
                           </span>
                         </div>
-                        <h4 className="text-xl font-bold text-gray-700 mb-2">{coupon.discount.discount_title}</h4>
+                        <h4 className="text-xl font-bold text-gray-700 mb-2">
+                          {coupon.discount.discount_title}
+                        </h4>
                         <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -700,11 +1030,19 @@ const ProfilePage = () => {
                             </svg>
                             <span>
                               {coupon.discount.discount_amount}
-                              {coupon.discount.discount_amount_type === "percent" ? "% OFF" : " OFF"}
+                              {coupon.discount.discount_amount_type ===
+                              "percent"
+                                ? "% OFF"
+                                : " OFF"}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -715,7 +1053,12 @@ const ProfilePage = () => {
                             <span>Min: ₹{coupon.discount.min_purchase}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -723,13 +1066,19 @@ const ProfilePage = () => {
                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                               />
                             </svg>
-                            <span>Max: ₹{coupon.discount.max_discount_amount}</span>
+                            <span>
+                              Max: ₹{coupon.discount.max_discount_amount}
+                            </span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-500 mb-1">Expired on</div>
-                        <div className="text-lg font-bold text-gray-600">{formatDate(coupon.discount.end_date)}</div>
+                        <div className="text-sm text-gray-500 mb-1">
+                          Expired on
+                        </div>
+                        <div className="text-lg font-bold text-gray-600">
+                          {formatDate(coupon.discount.end_date)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -743,7 +1092,12 @@ const ProfilePage = () => {
         <div className="bg-white rounded-3xl shadow-2xl p-8 mt-8 border-2 border-red-100">
           <div className="flex items-start gap-4 mb-6">
             <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -753,9 +1107,12 @@ const ProfilePage = () => {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Danger Zone</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Danger Zone
+              </h3>
               <p className="text-gray-600 mb-4">
-                Once you delete your account, there is no going back. Please be certain.
+                Once you delete your account, there is no going back. Please be
+                certain.
               </p>
               <button
                 onClick={() => setShowDeleteModal(true)}
@@ -786,7 +1143,12 @@ const ProfilePage = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-scaleIn">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -796,10 +1158,12 @@ const ProfilePage = () => {
               </svg>
             </div>
 
-            <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">Delete Account?</h3>
+            <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">
+              Delete Account?
+            </h3>
             <p className="text-gray-600 text-center mb-6">
-              This action cannot be undone. All your data, bookings, and account information will be permanently
-              deleted.
+              This action cannot be undone. All your data, bookings, and account
+              information will be permanently deleted.
             </p>
 
             {deleteError && (
@@ -811,8 +1175,8 @@ const ProfilePage = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  setShowDeleteModal(false)
-                  setDeleteError(null)
+                  setShowDeleteModal(false);
+                  setDeleteError(null);
                 }}
                 disabled={deleteLoading}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -831,7 +1195,12 @@ const ProfilePage = () => {
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -848,9 +1217,293 @@ const ProfilePage = () => {
         </div>
       )}
 
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-8 animate-scaleIn max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">Edit Profile</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleEditProfile} className="space-y-6">
+              {/* Profile Image Upload */}
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative mb-4">
+                  <div className="w-32 h-32 rounded-full bg-gray-100 overflow-hidden">
+                    <img
+                      src={
+                        imagePreview ||
+                        user?.profile_image_full_path ||
+                        "/default-avatar.png"
+                      }
+                      alt="Profile Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <label
+                    htmlFor="profile-image-upload"
+                    className="absolute bottom-0 right-0 bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </label>
+                  <input
+                    id="profile-image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </div>
+                <p className="text-sm text-gray-500">
+                  Click the camera icon to change your profile picture
+                </p>
+              </div>
+
+              {/* First Name */}
+              <div>
+                <label
+                  htmlFor="first_name"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, first_name: e.target.value })
+                  }
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  placeholder="Enter your first name"
+                />
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <label
+                  htmlFor="last_name"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, last_name: e.target.value })
+                  }
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  placeholder="Enter your last name"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  placeholder="Enter your email"
+                />
+              </div>
+              {/* Phone */}
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-semibold text-gray-700 mb-2"
+                >
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  placeholder="Enter your phone number"
+                />
+              </div>
+
+              {/* Identification Number */}
+              {/* <div>
+  <label htmlFor="identification_number" className="block text-sm font-semibold text-gray-700 mb-2">
+    Identification Number
+  </label>
+  <input
+    type="text"
+    id="identification_number"
+    value={formData.identification_number}
+    onChange={(e) => setFormData({ ...formData, identification_number: e.target.value })}
+    required
+    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+    placeholder="Enter your identification number"
+  />
+</div> */}
+
+              {/* Date of Birth */}
+              {/* <div>
+  <label htmlFor="date_of_birth" className="block text-sm font-semibold text-gray-700 mb-2">
+    Date of Birth
+  </label>
+  <input
+    type="date"
+    id="date_of_birth"
+    value={formData.date_of_birth}
+    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+    required
+    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+  />
+</div> */}
+
+              {/* Gender */}
+              {/* <div>
+  <label htmlFor="gender" className="block text-sm font-semibold text-gray-700 mb-2">
+    Gender
+  </label>
+  <select
+    id="gender"
+    value={formData.gender}
+    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+    required
+    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+  >
+    <option value="male">Male</option>
+    <option value="female">Female</option>
+    <option value="other">Other</option>
+  </select>
+</div> */}
+
+              {/* Identification Type (hidden since it's fixed) */}
+              <input type="hidden" value={formData.identification_type} />
+
+              {/* Error Message */}
+              {editError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  {editError}
+                </div>
+              )}
+
+              {/* Success Message */}
+              {editSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  Profile updated successfully!
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={editLoading}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {editLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default ProfilePage
+export default ProfilePage;
