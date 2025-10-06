@@ -178,7 +178,7 @@ export default function CategoriesPage() {
               {categories.map((category) => (
                 <Link
                   key={category.id}
-                  to={`/services/${category.id}`}
+                  to={`/category/${category.id}`}
                   className="group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2 border border-white/50"
                 >
                   <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50">
