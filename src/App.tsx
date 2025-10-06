@@ -23,6 +23,7 @@ import CartPage from "./pages/Cart.js";
 import CheckoutPage from "./pages/CheckoutPage.js";
 import SubcategoryServices from "./pages/Category/SubcategoryService.js";
 import FavoritesPage from "./pages/FavoritesPage.js";
+import BookingList from "./pages/Booking.js";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/bookings" element={<BookingList />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

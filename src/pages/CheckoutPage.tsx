@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { sendBookingRequest } from "@/helpers/bookinghelper"
-import { MapPin, Calendar, CreditCard, User, CheckCircle2, Loader2, Navigation } from "lucide-react"
+import { MapPin, Calendar, CreditCard, User, CheckCircle2, Loader2, Navigation, ChevronDown } from "lucide-react"
 
 interface CartItem {
   id: string
@@ -104,6 +104,24 @@ export default function CheckoutPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false)
   const [gettingLocation, setGettingLocation] = useState(false)
 
+  // Country code options (same as Login.tsx)
+  const countryCodes = [
+    { code: "+91", country: "India", flag: "🇮🇳" },
+    { code: "+1", country: "USA", flag: "🇺🇸" },
+    { code: "+44", country: "UK", flag: "🇬🇧" },
+    { code: "+61", country: "Australia", flag: "🇦🇺" },
+    { code: "+65", country: "Singapore", flag: "🇸🇬" },
+    { code: "+971", country: "UAE", flag: "🇦🇪" },
+    { code: "+86", country: "China", flag: "🇨🇳" },
+    { code: "+81", country: "Japan", flag: "🇯🇵" },
+    { code: "+82", country: "South Korea", flag: "🇰🇷" },
+    { code: "+33", country: "France", flag: "🇫🇷" },
+    { code: "+49", country: "Germany", flag: "🇩🇪" },
+  ]
+
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91")
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+
   const [addressForm, setAddressForm] = useState<AddressForm>({
     address_type: "others",
     address_label: "home",
@@ -122,6 +140,12 @@ export default function CheckoutPage() {
 
   const [serviceSchedule, setServiceSchedule] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("cash_after_service")
+
+  // Function to handle country selection in dropdown
+  const handleCountrySelect = (countryCode: string) => {
+    setSelectedCountryCode(countryCode)
+    setShowCountryDropdown(false)
+  }
 
   const fetchCartItems = async () => {
     const token = localStorage.getItem("demand_token")
@@ -309,7 +333,7 @@ export default function CheckoutPage() {
           address_type: addressForm.address_type,
           address_label: addressForm.address_label,
           contact_person_name: addressForm.contact_person_name,
-          contact_person_number: addressForm.contact_person_number,
+          contact_person_number: `${selectedCountryCode}${addressForm.contact_person_number}`,
           address: addressForm.address,
           lat: addressForm.lat,
           lon: addressForm.lon,
@@ -426,16 +450,51 @@ export default function CheckoutPage() {
                         onChange={(e) => handleInputChange("contact_person_name", e.target.value)}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_number">Contact Number *</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_number">Contact Number *</Label>
+                    <div className="flex">
+                      {/* Country Code Dropdown */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                          className="flex items-center gap-1 h-11 px-3 rounded-l-md border border-r-0 border-input bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors"
+                        >
+                          <span>{countryCodes.find(c => c.code === selectedCountryCode)?.flag}</span>
+                          <span>{selectedCountryCode}</span>
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </button>
+
+                        {showCountryDropdown && (
+                          <div className="absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-background border border-input rounded-md shadow-lg z-10">
+                            {countryCodes.map((country) => (
+                              <button
+                                key={country.code}
+                                type="button"
+                                onClick={() => handleCountrySelect(country.code)}
+                                className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted transition-colors ${
+                                  selectedCountryCode === country.code ? 'bg-primary/10 text-primary' : ''
+                                }`}
+                              >
+                                <span className="text-base">{country.flag}</span>
+                                <span className="flex-1 text-left">{country.country}</span>
+                                <span className="text-muted-foreground">{country.code}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                       <Input
                         id="contact_number"
                         type="tel"
-                        placeholder="+1234567890"
+                        placeholder="1234567890"
                         value={addressForm.contact_person_number}
                         onChange={(e) => handleInputChange("contact_person_number", e.target.value)}
+                        className="h-11 rounded-l-none transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
+                  </div>
                   </div>
                 </CardContent>
               </Card>
@@ -680,16 +739,16 @@ export default function CheckoutPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
-                      <span className="font-medium">${calculateTotal().toFixed(2)}</span>
+                      <span className="font-medium">₹{calculateTotal().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Service Fee</span>
-                      <span className="font-medium">$0.00</span>
+                      <span className="font-medium">₹0.00</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>₹{calculateTotal().toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -713,6 +772,14 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Overlay to close dropdown when clicking outside */}
+      {showCountryDropdown && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setShowCountryDropdown(false)}
+        />
+      )}
     </div>
   )
 }
