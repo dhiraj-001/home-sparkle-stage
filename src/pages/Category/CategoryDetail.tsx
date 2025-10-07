@@ -250,10 +250,10 @@ const CategoryChildList: React.FC = () => {
               </Link>
               <ChevronRight className="w-4 h-4" />
               <Link
-                to="/services"
+                to="/categories"
                 className="hover:text-white/80 transition-colors"
               >
-                Services
+                categories
               </Link>
               <ChevronRight className="w-4 h-4" />
               <span className="text-white/90">Sub Categories</span>
