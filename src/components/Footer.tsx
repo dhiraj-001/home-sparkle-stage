@@ -95,14 +95,14 @@ const Footer = () => {
           <div>
             <h4 className="font-bold mb-4">For customers</h4>
             <ul className="space-y-2 text-sm">
-              <li>
+              {/* <li>
                 <Link
                   to="/reviews"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   UC reviews
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   to="/categories"
@@ -113,7 +113,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/contact"
+                  to="/helpsupport"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Contact us
