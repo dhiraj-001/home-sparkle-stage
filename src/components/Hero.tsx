@@ -9,6 +9,8 @@ import { Clock, Shield, Star, Users } from "lucide-react";
 // Alternative version with Tailwind animations only
 // Alternative compact stats design
 const Hero = () => {
+  const token = localStorage.getItem("demand_token")
+
   return (
     <section className="py-12 bg-gradient-to-b from-background to-secondary/20">
       <div className="container mx-auto px-4">
@@ -60,13 +62,19 @@ const Hero = () => {
   </div>
 </div>
             {/* CTA Button */}
-            {/* <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            {token == null &&
+            <div>
+              <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               <button className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors duration-300 shadow-lg hover:shadow-xl">
                 Book a Service Now
               </button>
-            </div> */}
+            </div>
+            </div>
+              } 
           </div>
 
+           
+            
           {/* Right Side: Image Grid */}
           <div className="grid grid-cols-2 gap-4">
             <img

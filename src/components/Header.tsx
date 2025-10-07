@@ -476,7 +476,7 @@ const Header = () => {
           <div className="lg:hidden bg-white border-t border-gray-200 shadow-lg">
             <div className="container mx-auto px-4 py-4">
               {/* Mobile Search */}
-              <div className="relative mb-4">
+              {/* <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
@@ -493,7 +493,7 @@ const Header = () => {
                     <X className="w-4 h-4" />
                   </button>
                 )}
-              </div>
+              </div> */}
 
               {/* Mobile Navigation */}
               <nav className="flex flex-col space-y-3">
