@@ -186,7 +186,7 @@ const AllServices = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-green-50/20">
           <div className="container mx-auto px-4 py-12">
             <div className="mb-12">
               <div className="h-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-64 mb-4 animate-pulse" />
@@ -222,7 +222,7 @@ const AllServices = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-green-50/20 flex items-center justify-center">
           <div className="max-w-md mx-auto text-center bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-red-100">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,8 +252,8 @@ const AllServices = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl animate-pulse" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-green-50/20 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/10 to-green-400/10 rounded-full blur-3xl animate-pulse" />
         <div
           className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
@@ -344,7 +344,7 @@ const AllServices = () => {
                     </div>
 
                     <div className="p-6">
-                      <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:bg-clip-text transition-all duration-300 text-lg">
+                      <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-green-600 group-hover:bg-clip-text transition-all duration-300 text-lg">
                         {service.name}
                       </h3>
 
@@ -366,7 +366,7 @@ const AllServices = () => {
                         </div>
 
                         <div className="text-right">
-                          <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                          <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
                             {formatPrice(getStartingPrice(service))}
                           </div>
                           <div className="text-xs text-gray-500 font-medium">starting price</div>
@@ -384,7 +384,7 @@ const AllServices = () => {
                         )}
                     </div>
 
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-green-500 to-green-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
                   </Link>
                 ))}
               </div>
@@ -402,7 +402,7 @@ const AllServices = () => {
                   </button>
 
                   <div className="flex items-center gap-2">
-                    <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold shadow-lg">
+                    <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-xl font-bold shadow-lg">
                       {currentPage}
                     </span>
                     <span className="text-gray-500 font-medium">of</span>

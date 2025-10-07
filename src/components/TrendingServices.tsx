@@ -445,7 +445,7 @@ const TrendingServices = () => {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
 
                       <div className="absolute top-4 left-4">
-                        <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold text-gray-700 shadow-lg border border-white/50">
+                        <div className="bg-white/45 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold text-blue-700 shadow-lg border border-white/50">
                           {service.category?.name}
                         </div>
                       </div>
@@ -527,7 +527,7 @@ const TrendingServices = () => {
                         </div>
 
                         <div className="text-right">
-                          <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                          <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
                             {formatPrice(getStartingPrice(service))}
                           </div>
                           <div className="text-xs text-gray-500 font-medium">
@@ -537,13 +537,13 @@ const TrendingServices = () => {
                       </div>
                     </div>
 
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-green-600 to-green-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
                   </Link>
 
                   <div className="p-6 pt-0">
                     <Button
                       onClick={(e) => handleAddToCartClick(e, service)}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                     >
                       <ShoppingCart className="w-4 h-4" />
                       Add to Cart

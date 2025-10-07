@@ -146,7 +146,7 @@ const CategoryChildList: React.FC = () => {
     const gradients = [
       "from-blue-900/80 to-blue-700/60",
       "from-green-900/80 to-green-700/60",
-      "from-purple-900/80 to-purple-700/60",
+      "from-green-900/80 to-green-700/60",
       "from-pink-900/80 to-pink-700/60",
       "from-indigo-900/80 to-indigo-700/60",
     ];
@@ -169,8 +169,8 @@ const CategoryChildList: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-          <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-purple-600 text-white py-20">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+          <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 text-white py-20">
             <div className="container mx-auto px-4">
               <div className="h-8 bg-white/20 rounded w-64 mb-4 animate-pulse"></div>
               <div className="h-12 bg-white/20 rounded w-96 mb-6 animate-pulse"></div>
@@ -209,7 +209,7 @@ const CategoryChildList: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
           <section className="py-16">
             <div className="container mx-auto px-4">
               <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-700 text-center max-w-2xl mx-auto">
@@ -232,8 +232,8 @@ const CategoryChildList: React.FC = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-purple-600 text-white overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 text-white overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -448,7 +448,7 @@ const CategoryChildList: React.FC = () => {
 
                         <Link to={`/subcategory/${category.id}/services`}>
                           <Button
-                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold group/btn"
+                            className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-green-700 text-white font-semibold group/btn"
                             size="lg"
                           >
                             <span>Explore Services</span>
