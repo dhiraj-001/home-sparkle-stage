@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ServicesStickyNavbar from "@/components/ServiceSticyBar";
 
 interface Category {
   id: string;
@@ -169,7 +170,7 @@ const CategoryChildList: React.FC = () => {
       <>
         <Header />
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-          <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white py-20">
+          <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-purple-600 text-white py-20">
             <div className="container mx-auto px-4">
               <div className="h-8 bg-white/20 rounded w-64 mb-4 animate-pulse"></div>
               <div className="h-12 bg-white/20 rounded w-96 mb-6 animate-pulse"></div>
@@ -232,7 +233,7 @@ const CategoryChildList: React.FC = () => {
     <>
       <Header />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white overflow-hidden">
+        <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-purple-600 text-white overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -309,6 +310,8 @@ const CategoryChildList: React.FC = () => {
           </div>
         </div>
 
+
+        <ServicesStickyNavbar />
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto mb-12">
