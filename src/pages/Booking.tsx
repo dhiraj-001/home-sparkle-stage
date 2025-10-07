@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -572,8 +571,30 @@ const BookingList: React.FC<BookingListProps> = ({
                     </div>
                   </div>
 
+                  {/* Minimal Financial Information */}
                   <div className="mt-6 pt-6 border-t-2 border-gray-100">
-                    <div className="flex justify-end">
+                    <div className="flex flex-wrap gap-4 justify-between items-center">
+                      <div className="flex flex-wrap gap-4">
+                        {booking.total_discount_amount > 0 && (
+                          <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
+                            <span className="text-sm font-medium text-green-700">Discount:</span>
+                            <span className="text-sm font-bold text-green-800">₹{booking.total_discount_amount}</span>
+                          </div>
+                        )}
+                        {booking.total_tax_amount > 0 && (
+                          <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg">
+                            <span className="text-sm font-medium text-blue-700">Tax:</span>
+                            <span className="text-sm font-bold text-blue-800">₹{booking.total_tax_amount}</span>
+                          </div>
+                        )}
+                        {booking.total_campaign_discount_amount > 0 && (
+                          <div className="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg">
+                            <span className="text-sm font-medium text-purple-700">Campaign:</span>
+                            <span className="text-sm font-bold text-purple-800">₹{booking.total_campaign_discount_amount}</span>
+                          </div>
+                        )}
+                      </div>
+                      
                       <Button
                         onClick={() => window.open(`https://admin.sarvoclub.com/admin/booking/customer-invoice/${booking.id}/en`, '_blank')}
                         className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
@@ -581,26 +602,6 @@ const BookingList: React.FC<BookingListProps> = ({
                         <Download className="h-4 w-4 mr-2" />
                         Download Invoice
                       </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-6 border-t-2 border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl">
-                      <p className="text-xs font-semibold text-gray-600 mb-1">DISCOUNTS</p>
-                      <p className="text-sm font-bold text-gray-900">
-                        Campaign: ₹{booking.total_campaign_discount_amount}
-                        {booking.total_coupon_discount_amount > 0 && (
-                          <span className="block">Coupon: ₹{booking.total_coupon_discount_amount}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl">
-                      <p className="text-xs font-semibold text-gray-600 mb-1">TAX AMOUNT</p>
-                      <p className="text-sm font-bold text-gray-900">₹{booking.total_tax_amount}</p>
-                    </div>
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-xl">
-                      <p className="text-xs font-semibold text-gray-600 mb-1">LAST UPDATED</p>
-                      <p className="text-sm font-bold text-gray-900">{formatDate(booking.updated_at)}</p>
                     </div>
                   </div>
                 </CardContent>
