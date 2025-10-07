@@ -24,6 +24,7 @@ import CheckoutPage from "./pages/CheckoutPage.js";
 import SubcategoryServices from "./pages/Category/SubcategoryService.js";
 import FavoritesPage from "./pages/FavoritesPage.js";
 import BookingList from "./pages/Booking.js";
+import HelpSupport from "./pages/HelpSupport.js";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => {
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/bookings" element={<BookingList />} />
+            <Route path="/helpsupport" element={<HelpSupport />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
