@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, Navigate, useNavigate } from "react-router-dom"
 import { Star, Users, Zap, Heart, Search, ArrowLeft } from "lucide-react"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
@@ -102,6 +102,14 @@ const FavoritesPage = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const { toast } = useToast()
   const authToken = localStorage.getItem("demand_token")
+  const navigate = useNavigate()
+
+useEffect(() => {
+  const token = localStorage.getItem("demand_token");
+  if (token == null) {
+    navigate('/login'); // Replace '/login' with your actual login route
+  }
+}, [navigate]);
 
   useEffect(() => {
     if (authToken) {
