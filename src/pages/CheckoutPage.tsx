@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { sendBookingRequest } from "@/helpers/bookinghelper"
 import { MapPin, Calendar, CreditCard, User, CheckCircle2, Loader2, Navigation, ChevronDown } from "lucide-react"
+import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 
 interface CartItem {
   id: string
@@ -369,7 +371,7 @@ export default function CheckoutPage() {
 
       const response = await sendBookingRequest(bookingConfig);
 
-      if (response.response_code.include("200") || response.response_code === "200") {
+      if (response.response_code.includes("200") || response.response_code === "200") {
         setBookingSuccess(true);
         // Clear cart
         localStorage.removeItem("cart");
@@ -420,6 +422,8 @@ export default function CheckoutPage() {
   }
 
   return (
+    <>
+    <Header/>
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
@@ -781,5 +785,7 @@ export default function CheckoutPage() {
         />
       )}
     </div>
+    <Footer/>
+    </>
   )
 }

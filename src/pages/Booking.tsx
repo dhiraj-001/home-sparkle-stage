@@ -22,6 +22,8 @@ import {
   Package,
   Download,
 } from "lucide-react"
+import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 
 interface Customer {
   id: string
@@ -343,7 +345,10 @@ const BookingList: React.FC<BookingListProps> = ({
   }
 
   return (
+    <><Header/>
+ 
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
+      
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
           <div className="space-y-2">
@@ -458,159 +463,109 @@ const BookingList: React.FC<BookingListProps> = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {filteredBookings.map((booking) => (
-              <Card
-                key={booking.id}
-                className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm hover:scale-[1.02] group"
-              >
-                <CardHeader className="pb-4 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-b-2 border-gray-100">
-                  <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <CardTitle className="text-xl font-bold text-gray-900">
-                          Booking #{booking.readable_id}
-                        </CardTitle>
-                        <Badge
-                          variant={getStatusBadgeVariant(booking.booking_status)}
-                          className="px-4 py-1.5 text-sm font-semibold flex items-center gap-2"
-                        >
-                          {getStatusIcon(booking.booking_status)}
-                          {booking.booking_status.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <CardDescription className="flex flex-wrap items-center gap-4 text-base">
-                        <span className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm">
-                          <Calendar className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium text-gray-700">{formatDate(booking.service_schedule)}</span>
-                        </span>
-                        <span className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm">
-                          <Clock className="h-4 w-4 text-purple-600" />
-                          <span className="font-medium text-gray-700">{formatDate(booking.created_at)}</span>
-                        </span>
-                      </CardDescription>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-lg border-2 border-gray-100 space-y-2">
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center justify-end gap-1">
-                        <IndianRupee className="h-6 w-6" />
-                        {booking.total_booking_amount}
-                      </p>
-                      <p className="text-sm text-gray-600 capitalize font-medium">
-                        {getPaymentMethodLabel(booking.payment_method)}
-                      </p>
-                      {booking.is_paid === 1 ? (
-                        <Badge className="text-xs bg-green-100 text-green-700 hover:bg-green-100 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Paid
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          Pending Payment
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
+         <div className="space-y-4">
+  {filteredBookings.map((booking) => (
+    <div
+      key={booking.id}
+      className="border border-gray-300 rounded-2xl p-6 bg-gradient-to-br from-white to-gray-50 shadow-md hover:shadow-lg transition-shadow duration-300 text-sm md:text-base"
+    >
+      {/* Header */}
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <div className="font-semibold text-gray-900">
+          Booking #{booking.readable_id}
+        </div>
 
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      <h4 className="font-bold text-gray-900 flex items-center gap-2 text-lg">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                          <User className="h-4 w-4 text-white" />
-                        </div>
-                        Customer Details
-                      </h4>
-                      <div className="flex items-start gap-4 bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-xl">
-                        <img
-                          src={booking.customer.profile_image_full_path || "/placeholder.svg"}
-                          alt={`${booking.customer.first_name} ${booking.customer.last_name}`}
-                          className="w-14 h-14 rounded-full object-cover border-4 border-white shadow-lg"
-                        />
-                        <div className="space-y-2 flex-1">
-                          <p className="font-bold text-gray-900 text-lg">
-                            {booking.customer.first_name} {booking.customer.last_name}
-                          </p>
-                          <p className="text-sm text-gray-700 flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg w-fit">
-                            <Phone className="h-4 w-4 text-blue-600" />
-                            {booking.customer.phone}
-                          </p>
-                          <p className="text-sm text-gray-600">{booking.customer.email}</p>
-                        </div>
-                      </div>
-                    </div>
+        <div
+          className={`text-xs font-medium px-2 py-1 rounded-full ${
+            booking.booking_status === "completed"
+              ? "bg-green-100 text-green-700"
+              : booking.booking_status === "pending"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-gray-100 text-gray-600"
+          }`}
+        >
+          {booking.booking_status.toUpperCase()}
+        </div>
+      </div>
 
-                    <div className="space-y-4">
-                      <h4 className="font-bold text-gray-900 flex items-center gap-2 text-lg">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                          <MapPin className="h-4 w-4 text-white" />
-                        </div>
-                        Service Details
-                      </h4>
-                      <div className="space-y-3 bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
-                        <div className="flex justify-between items-center bg-white px-4 py-3 rounded-lg">
-                          <span className="text-gray-600 font-medium">Service Location:</span>
-                          <span className="font-bold capitalize text-gray-900">{booking.service_location}</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-white px-4 py-3 rounded-lg">
-                          <span className="text-gray-600 font-medium">OTP:</span>
-                          <span className="font-mono font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            {booking.booking_otp}
-                          </span>
-                        </div>
-                        {booking.coupon_code && (
-                          <div className="flex justify-between items-center bg-white px-4 py-3 rounded-lg">
-                            <span className="text-gray-600 font-medium">Coupon Applied:</span>
-                            <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700">
-                              {booking.coupon_code}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+      {/* Details */}
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Service Date</div>
+          <div>{formatDate(booking.service_schedule)}</div>
+        </div>
 
-                  {/* Minimal Financial Information */}
-                  <div className="mt-6 pt-6 border-t-2 border-gray-100">
-                    <div className="flex flex-wrap gap-4 justify-between items-center">
-                      <div className="flex flex-wrap gap-4">
-                        {booking.total_discount_amount > 0 && (
-                          <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
-                            <span className="text-sm font-medium text-green-700">Discount:</span>
-                            <span className="text-sm font-bold text-green-800">₹{booking.total_discount_amount}</span>
-                          </div>
-                        )}
-                        {booking.total_tax_amount > 0 && (
-                          <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg">
-                            <span className="text-sm font-medium text-blue-700">Tax:</span>
-                            <span className="text-sm font-bold text-blue-800">₹{booking.total_tax_amount}</span>
-                          </div>
-                        )}
-                        {booking.total_campaign_discount_amount > 0 && (
-                          <div className="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg">
-                            <span className="text-sm font-medium text-purple-700">Campaign:</span>
-                            <span className="text-sm font-bold text-purple-800">₹{booking.total_campaign_discount_amount}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <Button
-                        onClick={() => window.open(`https://admin.sarvoclub.com/admin/booking/customer-invoice/${booking.id}/en`, '_blank')}
-                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Invoice
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Booking Created</div>
+          <div>{formatDate(booking.created_at)}</div>
+        </div>
+
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Amount</div>
+          <div className="font-semibold text-gray-900">
+            ₹{booking.total_booking_amount}
           </div>
+        </div>
+
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Payment</div>
+          <div className="flex items-center gap-2">
+            {booking.is_paid === 1 ? (
+              <span className="text-green-600 font-medium">Paid</span>
+            ) : (
+              <span className="text-red-500 font-medium">Pending</span>
+            )}
+            <span className="text-xs text-gray-500">
+              ({getPaymentMethodLabel(booking.payment_method)})
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <hr className="my-4 border-gray-200" />
+
+      {/* Customer & OTP */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Customer</div>
+          <div className="font-medium">
+            {booking.customer.first_name} {booking.customer.last_name}
+          </div>
+          <div className="text-sm text-gray-600">{booking.customer.phone}</div>
+        </div>
+
+        <div>
+          <div className="text-xs text-gray-500 mb-1">OTP</div>
+          <div className="text-gray-900 font-mono font-semibold">
+            {booking.booking_otp}
+          </div>
+        </div>
+      </div>
+
+      {/* Invoice Button */}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={() =>
+            window.open(
+              `https://admin.sarvoclub.com/admin/booking/customer-invoice/${booking.id}/en`,
+              "_blank"
+            )
+          }
+          className="text-sm text-blue-600 hover:underline font-medium"
+        >
+          Download Invoice
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
+
         )}
       </div>
     </div>
+    <Footer/>
+       </>
   )
 }
 
