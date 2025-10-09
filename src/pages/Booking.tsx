@@ -578,7 +578,7 @@ const BookingList: React.FC<BookingListProps> = ({
                             onClick={(e) => {
                               e.stopPropagation()
                               window.open(
-                                `https://admin.sarvoclub.com/admin/booking/customer-invoice/${booking.id}/en`,
+                                `${baseUrl}/admin/booking/customer-invoice/${booking.id}/en`,
                                 "_blank"
                               )
                             }}
@@ -914,7 +914,7 @@ const BookingList: React.FC<BookingListProps> = ({
                 <div className="flex flex-wrap gap-4 justify-end pt-4 border-t">
                   <Button
                     onClick={() => window.open(
-                      `https://admin.sarvoclub.com/admin/booking/customer-invoice/${selectedBooking.id}/en`,
+                      `${baseUrl}/admin/booking/customer-invoice/${selectedBooking.id}/en`,
                       "_blank"
                     )}
                     className="flex items-center gap-2"

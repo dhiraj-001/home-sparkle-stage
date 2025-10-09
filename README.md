@@ -1,73 +1,243 @@
-# Welcome to your Lovable project
+# Home Sparkle - Service Booking Platform
 
-## Project info
+A modern, responsive web application for booking home services built with React, TypeScript, and Tailwind CSS. The platform allows users to browse services, manage bookings, handle cart operations, and access various home maintenance services.
 
-**URL**: https://lovable.dev/projects/668a3882-bdc8-4129-908d-49bc8ee48eb2
+## 🚀 Features
 
-## How can I edit this code?
+### Core Functionality
+- **Service Browsing**: Explore categories and services with detailed information
+- **User Authentication**: Secure login, registration, and password recovery
+- **Booking Management**: Create, view, and manage service bookings
+- **Cart System**: Add services to cart, manage quantities, and apply coupons
+- **Favorites**: Save preferred services for quick access
+- **Profile Management**: Update user information and preferences
+- **Checkout Process**: Seamless booking completion with payment integration
 
-There are several ways of editing your application.
+### User Experience
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Real-time Updates**: Live cart updates and booking status tracking
+- **Search & Filters**: Advanced filtering and search capabilities
+- **Interactive UI**: Modern components with smooth animations
+- **Error Handling**: Comprehensive error states and user feedback
 
-**Use Lovable**
+## 🛠️ Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/668a3882-bdc8-4129-908d-49bc8ee48eb2) and start prompting.
+### Frontend Framework
+- **React 18** - Modern React with hooks and concurrent features
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and development server
 
-Changes made via Lovable will be committed automatically to this repo.
+### Styling & UI
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Modern UI components built on Radix UI
+- **Lucide React** - Beautiful icon library
 
-**Use your preferred IDE**
+### State Management & Data
+- **React Hooks** - Built-in state management
+- **Local Storage** - Client-side data persistence
+- **RESTful APIs** - Backend communication
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Development Tools
+- **ESLint** - Code linting
+- **PostCSS** - CSS processing
+- **Bun** - Fast JavaScript runtime (alternative to npm)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📁 Project Structure
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+home-sparkle-stage/
+├── public/                 # Static assets
+├── src/
+│   ├── assets/            # Images and media files
+│   ├── components/        # Reusable UI components
+│   │   ├── ui/           # shadcn/ui components
+│   │   └── ...           # Custom components
+│   ├── helpers/          # API helper functions
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utility functions
+│   ├── pages/            # Page components
+│   │   ├── AuthPages/    # Authentication pages
+│   │   ├── Category/     # Category-related pages
+│   │   ├── Services/     # Service-related pages
+│   │   └── ...           # Other pages
+│   └── types/            # TypeScript type definitions
+├── package.json          # Dependencies and scripts
+├── tailwind.config.ts    # Tailwind configuration
+├── tsconfig.json         # TypeScript configuration
+└── vite.config.ts        # Vite configuration
 ```
 
-**Edit a file directly in GitHub**
+## 🚀 Getting Started
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Prerequisites
+- **Node.js** (v16 or higher)
+- **npm**, **yarn**, or **bun** package manager
 
-**Use GitHub Codespaces**
+### Installation
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd home-sparkle-stage
+   ```
 
-## What technologies are used for this project?
+2. **Install dependencies**
+   ```bash
+   # Using npm
+   npm install
 
-This project is built with:
+   # Using yarn
+   yarn install
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+   # Using bun (recommended)
+   bun install
+   ```
 
-## How can I deploy this project?
+3. **Environment Setup**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_URL=https://admin.sarvoclub.com
+   # Add other environment variables as needed
+   ```
 
-Simply open [Lovable](https://lovable.dev/projects/668a3882-bdc8-4129-908d-49bc8ee48eb2) and click on Share -> Publish.
+4. **Start the development server**
+   ```bash
+   # Using npm
+   npm run dev
 
-## Can I connect a custom domain to my Lovable project?
+   # Using yarn
+   yarn dev
 
-Yes, you can!
+   # Using bun
+   bun run dev
+   ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+5. **Build for production**
+   ```bash
+   # Using npm
+   npm run build
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+   # Using yarn
+   yarn build
+
+   # Using bun
+   bun run build
+   ```
+
+## 📱 Available Scripts
+
+- `dev` - Start development server
+- `build` - Build for production
+- `preview` - Preview production build
+- `lint` - Run ESLint
+
+## 🔧 Configuration
+
+### API Configuration
+The application connects to the backend API at `https://admin.sarvoclub.com`. To use a different API endpoint, update the `VITE_API_URL` environment variable.
+
+### Styling
+- **Tailwind CSS** is configured in `tailwind.config.ts`
+- **Custom styles** can be added in `src/index.css`
+- **Component styles** use Tailwind utility classes
+
+## 🏗️ Architecture
+
+### Component Structure
+- **Pages**: Top-level route components
+- **Components**: Reusable UI elements
+- **Helpers**: API interaction functions
+- **Hooks**: Custom React hooks for shared logic
+
+### API Integration
+- Centralized API calls in helper files
+- Consistent error handling and loading states
+- TypeScript interfaces for API responses
+
+### State Management
+- Local component state with React hooks
+- Local storage for user session data
+- Context providers for global state (if needed)
+
+## 🔐 Authentication
+
+The application supports:
+- User registration and login
+- OTP verification
+- Password reset functionality
+- JWT token-based authentication
+
+## 📊 Key Features Implementation
+
+### Booking System
+- Create bookings with service details
+- Real-time booking status updates
+- Cancellation and rescheduling
+
+### Cart Management
+- Add/remove services
+- Quantity management
+- Coupon code application
+- Price calculations
+
+### Service Discovery
+- Category-based browsing
+- Service search and filtering
+- Detailed service information
+- Favorite services
+
+## 🧪 Testing
+
+### Manual Testing Checklist
+- [ ] User registration and login flow
+- [ ] Service browsing and search
+- [ ] Cart operations (add, update, remove)
+- [ ] Booking creation and management
+- [ ] Profile updates
+- [ ] Responsive design on mobile/tablet
+- [ ] Error handling and edge cases
+
+## 🚀 Deployment
+
+### Build Process
+1. Run `npm run build` to create production build
+2. Deploy the `dist/` folder to your hosting service
+3. Configure environment variables on the server
+
+### Recommended Hosting
+- **Vercel** - Optimized for Vite applications
+- **Netlify** - Great for static sites with forms
+- **AWS S3 + CloudFront** - Scalable static hosting
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Code Style
+- Follow TypeScript best practices
+- Use ESLint configuration
+- Maintain consistent naming conventions
+- Add proper TypeScript types
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Contact the development team
+- Check the documentation
+
+## 🔄 Updates
+
+Keep the dependencies updated and follow semantic versioning for releases.
+
+---
+
+**Built with ❤️ using React, TypeScript, and Tailwind CSS**
