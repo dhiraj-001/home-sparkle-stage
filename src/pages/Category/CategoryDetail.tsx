@@ -16,6 +16,7 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ServicesStickyNavbar from "@/components/ServiceSticyBar";
+import { fetchChildCategories } from "@/helpers/categories";
 
 interface Category {
   id: string;
@@ -85,40 +86,11 @@ const CategoryChildList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json; charset=UTF-8",
-        zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-        "X-localization": "en",
-        guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-      };
-
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/category/childes?id=${categoryId}&limit=${limit}&offset=${page}`,
-        {
-          method: "GET",
-          headers: headers,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: CategoryResponse = await response.json();
-      console.log("service is", data);
-      if (data.response_code === "default_200") {
-        setCategories(data.content.data);
-        setCurrentPage(data.content.current_page);
-        setTotalPages(data.content.last_page);
-        setTotalCategories(data.content.total);
-      } else {
-        throw new Error(data.message || "Failed to fetch categories");
-      }
+      const content = await fetchChildCategories(categoryId, limit, page, token);
+      setCategories(content.data);
+      setCurrentPage(content.current_page);
+      setTotalPages(content.last_page);
+      setTotalCategories(content.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

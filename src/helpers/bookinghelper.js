@@ -142,4 +142,47 @@ const bookingConfig = {
 };
 */
 
-export { sendBookingRequest, createBookingData };
+const cancelBooking = async (config) => {
+  const {
+    authorization,
+    bookingId,
+    baseURL = 'https://admin.sarvoclub.com' // Use the same base URL as in Booking.tsx
+  } = config;
+
+  // Validate required parameters
+  if (!authorization) {
+    throw new Error('Authorization token is required');
+  }
+
+  if (!bookingId) {
+    throw new Error('Booking ID is required');
+  }
+
+  try {
+    const response = await fetch(`${baseURL}/api/v1/customer/booking/status-update/${bookingId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': authorization,
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-localization': 'en',
+        zoneId: 'a02c55ff-cb84-4bbb-bf91-5300d1766a29',
+        'Accept-Charset': 'UTF-8',
+      },
+      body: JSON.stringify({
+        booking_status: 'canceled',
+        _method: 'put'
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Cancel booking failed:', error);
+    throw error;
+  }
+};
+
+export { sendBookingRequest, createBookingData, cancelBooking };

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import {fetchCoupons} from "@/helpers/coupon"
+import { deleteUserAccount, fetchUserInfo, logoutUser } from "@/helpers/profile";
 
 interface User {
   id: string;
@@ -96,37 +97,19 @@ const ProfilePage = () => {
     }
 
     try {
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/info`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.response_code === "default_200" && data.content) {
-          setUser(data.content);
-          // Update form data with current user data
-          setFormData({
-            first_name: data.content.first_name || "",
-            last_name: data.content.last_name || "",
-            email: data.content.email || "",
-            phone: data.content.phone || "",
-            identification_type: "nid",
-            identification_number: data.content.identification_number || "",
-            date_of_birth: data.content.date_of_birth || "",
-            gender: data.content.gender || "male",
-          });
-        } else {
-          throw new Error("Invalid API response");
-        }
-      } else {
-        localStorage.removeItem("demand_token");
-        navigate("/login");
-      }
+      const userData = await fetchUserInfo(token);
+      setUser(userData);
+      // Update form data with current user data
+      setFormData({
+        first_name: userData.first_name || "",
+        last_name: userData.last_name || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        identification_type: "nid",
+        identification_number: userData.identification_number || "",
+        date_of_birth: userData.date_of_birth || "",
+        gender: userData.gender || "male",
+      });
     } catch (error) {
       console.error("Failed to fetch user data:", error);
       localStorage.removeItem("demand_token");
@@ -150,22 +133,9 @@ const ProfilePage = () => {
     }
 
     try {
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/auth/logout`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        localStorage.removeItem("demand_token");
-        navigate("/");
-      } else {
-        console.error("Logout failed");
-      }
+      await logoutUser(token);
+      localStorage.removeItem("demand_token");
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -182,28 +152,12 @@ const ProfilePage = () => {
     setDeleteError(null);
 
     try {
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/remove-account`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        localStorage.removeItem("demand_token");
-        navigate("/");
-      } else {
-        const data = await response.json();
-        setDeleteError(
-          data.message || "Failed to delete account. Please try again."
-        );
-      }
+      await deleteUserAccount(token);
+      localStorage.removeItem("demand_token");
+      navigate("/");
     } catch (error) {
       console.error("Delete account failed:", error);
-      setDeleteError("An error occurred. Please try again later.");
+      setDeleteError(error.message || "An error occurred. Please try again later.");
     } finally {
       setDeleteLoading(false);
     }

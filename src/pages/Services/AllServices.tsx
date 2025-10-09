@@ -7,6 +7,7 @@ import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { useToast } from "@/hooks/use-toast"
 import { toggleFavorite as toggleFavoriteApi } from "@/helpers/toggleFavorite"
+import { fetchAllServices } from "@/helpers/services"
 
 interface ServiceVariation {
   variant_key: string
@@ -67,34 +68,19 @@ const AllServices = () => {
   const authToken = localStorage.getItem("demand_token")
 
   useEffect(() => {
-    fetchAllServices(currentPage)
+    fetchServicesData(currentPage)
   }, [currentPage])
 
-  const fetchAllServices = async (page: number) => {
+  const fetchServicesData = async (page: number) => {
     setLoading(true)
     setError(null)
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
-      const response = await fetch(`${baseUrl}/api/v1/customer/service?limit=20&offset=${page}`, {
-        headers: {
-          "Content-Type": "application/json",
-          zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-          "X-localization": "en",
-          guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-          "Accept-Encoding": "gzip, deflate, br",
-        },
-      })
-
-      const data: AllServicesResponse = await response.json()
-
-      if (data.response_code === "default_200" && data.content.data) {
-        setServices(data.content.data)
-        setTotalServices(data.content.total)
-        setTotalPages(Math.ceil(data.content.total / data.content.per_page))
-      } else {
-        throw new Error("Failed to fetch services")
-      }
+      const content = await fetchAllServices(20, page, authToken)
+      setServices(content.data)
+      setCurrentPage(content.current_page)
+      setTotalPages(content.last_page)
+      setTotalServices(content.total)
     } catch (err) {
       console.error("Error fetching services:", err)
       setError("Failed to load services. Please try again.")
@@ -237,7 +223,7 @@ const AllServices = () => {
             <h3 className="text-xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h3>
             <p className="text-gray-600 mb-6">{error}</p>
             <button
-              onClick={() => fetchAllServices(currentPage)}
+              onClick={() => fetchServicesData(currentPage)}
               className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               Try Again

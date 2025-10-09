@@ -21,9 +21,23 @@ import {
   AlertCircle,
   Package,
   Download,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  CreditCard,
+  MapPinIcon,
 } from "lucide-react"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
+import { cancelBooking } from "@/helpers/bookinghelper"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 interface Customer {
   id: string
@@ -123,6 +137,10 @@ const BookingList: React.FC<BookingListProps> = ({
   const [selectedStatus, setSelectedStatus] = useState(initialStatus)
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState("newest")
+  const [cancelingBookingId, setCancelingBookingId] = useState<string | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [expandedBookings, setExpandedBookings] = useState<Set<string>>(new Set())
 
   const statusOptions = [
     { value: "all", label: "All Bookings" },
@@ -143,17 +161,17 @@ const BookingList: React.FC<BookingListProps> = ({
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
-        return "secondary"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
       case "accepted":
-        return "default"
+        return "bg-blue-100 text-blue-800 border-blue-200"
       case "ongoing":
-        return "default"
+        return "bg-purple-100 text-purple-800 border-purple-200"
       case "completed":
-        return "success"
+        return "bg-green-100 text-green-800 border-green-200"
       case "canceled":
-        return "destructive"
+        return "bg-red-100 text-red-800 border-red-200"
       default:
-        return "outline"
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 
@@ -180,6 +198,14 @@ const BookingList: React.FC<BookingListProps> = ({
       year: "numeric",
       month: "short",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
     })
@@ -299,6 +325,46 @@ const BookingList: React.FC<BookingListProps> = ({
       .join(" ")
   }
 
+  const handleCancelBooking = async (bookingId: string) => {
+    const token = localStorage.getItem("demand_token")
+    if (!token) {
+      toast.error("Please login to cancel a booking")
+      return
+    }
+
+    try {
+      setCancelingBookingId(bookingId)
+      const res = await cancelBooking({
+        authorization: `Bearer ${token}`,
+        bookingId,
+        baseURL: baseUrl,
+      })
+      
+      toast.success("Booking cancelled successfully")
+      fetchBookings()
+    } catch (error: any) {
+      console.error("Failed to cancel booking:", error)
+      toast.error(error.message || "Failed to cancel booking")
+    } finally {
+      setCancelingBookingId(null)
+    }
+  }
+
+  const toggleBookingExpansion = (bookingId: string) => {
+    const newExpanded = new Set(expandedBookings)
+    if (newExpanded.has(bookingId)) {
+      newExpanded.delete(bookingId)
+    } else {
+      newExpanded.add(bookingId)
+    }
+    setExpandedBookings(newExpanded)
+  }
+
+  const openBookingDetails = (booking: Booking) => {
+    setSelectedBooking(booking)
+    setIsDialogOpen(true)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -345,227 +411,546 @@ const BookingList: React.FC<BookingListProps> = ({
   }
 
   return (
-    <><Header/>
- 
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
-      
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              My Bookings
-            </h1>
-            <p className="text-gray-600 text-lg">Manage and track your service bookings</p>
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                My Bookings
+              </h1>
+              <p className="text-gray-600 text-lg">Manage and track your service bookings</p>
+            </div>
+
+            <div className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
+              <Package className="h-5 w-5" />
+              <span className="font-semibold text-lg">
+                {filteredBookings.length} booking{filteredBookings.length !== 1 ? "s" : ""}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
-            <Package className="h-5 w-5" />
-            <span className="font-semibold text-lg">
-              {filteredBookings.length} booking{filteredBookings.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
+          {showFilters && (
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-4 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+                <CardTitle className="text-xl flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                    <Filter className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Filters & Search
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-blue-600" />
+                      Booking Status
+                    </label>
+                    <Select value={selectedStatus} onValueChange={handleStatusChange}>
+                      <SelectTrigger className="border-2 hover:border-blue-400 transition-colors">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-        {showFilters && (
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardHeader className="pb-4 border-b bg-gradient-to-r from-blue-50 to-purple-50">
-              <CardTitle className="text-xl flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                  <Filter className="h-5 w-5 text-white" />
-                </div>
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Filters & Search
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-blue-600" />
-                    Booking Status
-                  </label>
-                  <Select value={selectedStatus} onValueChange={handleStatusChange}>
-                    <SelectTrigger className="border-2 hover:border-blue-400 transition-colors">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-purple-600" />
+                      Search
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input
+                        placeholder="Search by ID, name, phone..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-11 border-2 hover:border-purple-400 focus:border-purple-500 transition-colors"
+                      />
+                    </div>
+                  </div>
 
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-purple-600" />
-                    Search
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      placeholder="Search by ID, name, phone..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-11 border-2 hover:border-purple-400 focus:border-purple-500 transition-colors"
-                    />
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-pink-600" />
+                      Sort By
+                    </label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="border-2 hover:border-pink-400 transition-colors">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
 
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-pink-600" />
-                    Sort By
-                  </label>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="border-2 hover:border-pink-400 transition-colors">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sortOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          {filteredBookings.length === 0 ? (
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="text-center py-16">
+                <div className="space-y-6">
+                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mx-auto">
+                    <Calendar className="h-12 w-12 text-blue-600" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-gray-900">No bookings found</h3>
+                    <p className="text-gray-600 text-lg">
+                      {selectedStatus === "all"
+                        ? "You don't have any bookings yet. Start exploring our services!"
+                        : `No ${selectedStatus} bookings found.`}
+                    </p>
+                    {searchTerm && (
+                      <p className="text-sm text-gray-500 mt-4">Try adjusting your search terms or filters</p>
+                    )}
+                  </div>
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg">
+                    Browse Services
+                  </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredBookings.map((booking) => {
+                const isExpanded = expandedBookings.has(booking.id)
+                return (
+                  <Card
+                    key={booking.id}
+                    className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/90 backdrop-blur-sm cursor-pointer"
+                    onClick={() => openBookingDetails(booking)}
+                  >
+                    <CardContent className="p-6">
+                      {/* Main Booking Info */}
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h3 className="text-lg font-bold text-gray-900">
+                              Booking #{booking.readable_id}
+                            </h3>
+                            <Badge className={`${getStatusBadgeVariant(booking.booking_status)} font-medium`}>
+                              {getStatusIcon(booking.booking_status)}
+                              {booking.booking_status.charAt(0).toUpperCase() + booking.booking_status.slice(1)}
+                            </Badge>
+                          </div>
 
-        {filteredBookings.length === 0 ? (
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardContent className="text-center py-16">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-blue-600" />
+                              <span>{formatDate(booking.service_schedule)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-green-600" />
+                              <span>
+                                {booking.customer.first_name} {booking.customer.last_name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <IndianRupee className="h-4 w-4 text-purple-600" />
+                              <span className="font-semibold text-gray-900">
+                                ₹{booking.total_booking_amount}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.open(
+                                `https://admin.sarvoclub.com/admin/booking/customer-invoice/${booking.id}/en`,
+                                "_blank"
+                              )
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Invoice
+                          </Button>
+                          
+                          {booking.booking_status !== "completed" && booking.booking_status !== "canceled" && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleCancelBooking(booking.id)
+                              }}
+                              disabled={cancelingBookingId === booking.id}
+                              className="flex items-center gap-2"
+                            >
+                              {cancelingBookingId === booking.id ? (
+                                <>
+                                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                  Canceling...
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-4 w-4" />
+                                  Cancel
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 text-sm">
+                        <div className="flex items-center gap-4 text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <CreditCard className="h-4 w-4" />
+                            <span className={booking.is_paid === 1 ? "text-green-600" : "text-yellow-600"}>
+                              {booking.is_paid === 1 ? "Paid" : "Pending"} • {getPaymentMethodLabel(booking.payment_method)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPinIcon className="h-4 w-4" />
+                            <span>{booking.service_location || "Location not specified"}</span>
+                          </div>
+                        </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleBookingExpansion(booking.id)
+                          }}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="h-4 w-4" />
+                              Less Details
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-4 w-4" />
+                              More Details
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Expanded Details */}
+                      {isExpanded && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-3 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-gray-900 mb-2">Customer Details</h4>
+                              <div className="space-y-1 text-gray-600">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4" />
+                                  <span>
+                                    {booking.customer.first_name} {booking.customer.last_name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4" />
+                                  <span>{booking.customer.phone}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span>📧</span>
+                                  <span>{booking.customer.email}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold text-gray-900 mb-2">Booking Details</h4>
+                              <div className="space-y-1 text-gray-600">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4" />
+                                  <span>Created: {formatDate(booking.created_at)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span>🆔</span>
+                                  <span>OTP: {booking.booking_otp}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span>💳</span>
+                                  <span>Transaction: {booking.transaction_id || "N/A"}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-gray-900 mb-2">Payment Breakdown</h4>
+                              <div className="space-y-1 text-gray-600">
+                                <div className="flex justify-between">
+                                  <span>Base Amount:</span>
+                                  <span>₹{booking.total_booking_amount - booking.total_tax_amount}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Tax:</span>
+                                  <span>₹{booking.total_tax_amount}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Discount:</span>
+                                  <span className="text-green-600">-₹{booking.total_discount_amount}</span>
+                                </div>
+                                <div className="flex justify-between font-semibold text-gray-900 border-t pt-1">
+                                  <span>Total:</span>
+                                  <span>₹{booking.total_booking_amount}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold text-gray-900 mb-2">Service Information</h4>
+                              <div className="space-y-1 text-gray-600">
+                                <div className="flex items-start gap-2">
+                                  <MapPin className="h-4 w-4 mt-0.5" />
+                                  <span>{booking.service_address_location || "Address not specified"}</span>
+                                </div>
+                                {booking.coupon_code && (
+                                  <div className="flex items-center gap-2">
+                                    <span>🎫</span>
+                                    <span>Coupon: {booking.coupon_code}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Booking Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedBooking && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3 text-2xl">
+                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-white" />
+                  </div>
+                  Booking #{selectedBooking.readable_id} - Complete Details
+                </DialogTitle>
+                <DialogDescription>
+                  Detailed information about your service booking
+                </DialogDescription>
+              </DialogHeader>
+
               <div className="space-y-6">
-                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center mx-auto">
-                  <Calendar className="h-12 w-12 text-blue-600" />
+                {/* Status and Basic Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <Badge className={`${getStatusBadgeVariant(selectedBooking.booking_status)} text-lg py-1`}>
+                        {getStatusIcon(selectedBooking.booking_status)}
+                        {selectedBooking.booking_status.charAt(0).toUpperCase() + selectedBooking.booking_status.slice(1)}
+                      </Badge>
+                      <div className="text-lg font-semibold">
+                        {formatCurrency(selectedBooking.total_booking_amount)}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Service Schedule</h4>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar className="h-5 w-5 text-blue-600" />
+                            <span>{formatDate(selectedBooking.service_schedule)}</span>
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            Time: {formatTime(selectedBooking.service_schedule)}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Booking Created</h4>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Clock className="h-5 w-5 text-green-600" />
+                            <span>{formatDate(selectedBooking.created_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Payment Information</h4>
+                          <div className="space-y-2 text-gray-600">
+                            <div className="flex justify-between">
+                              <span>Status:</span>
+                              <span className={selectedBooking.is_paid === 1 ? "text-green-600 font-semibold" : "text-yellow-600 font-semibold"}>
+                                {selectedBooking.is_paid === 1 ? "Paid" : "Pending"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Method:</span>
+                              <span>{getPaymentMethodLabel(selectedBooking.payment_method)}</span>
+                            </div>
+                            {selectedBooking.transaction_id && (
+                              <div className="flex justify-between">
+                                <span>Transaction ID:</span>
+                                <span className="font-mono text-sm">{selectedBooking.transaction_id}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Customer and Location Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Customer Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Name:</span>
+                        <span className="font-semibold">
+                          {selectedBooking.customer.first_name} {selectedBooking.customer.last_name}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Phone:</span>
+                        <span className="font-semibold">{selectedBooking.customer.phone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Email:</span>
+                        <span className="font-semibold">{selectedBooking.customer.email}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Booking OTP:</span>
+                        <span className="font-mono font-bold text-lg text-blue-600">{selectedBooking.booking_otp}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        Service Location
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-gray-600 space-y-2">
+                        <div className="font-semibold text-gray-900">{selectedBooking.service_location}</div>
+                        <div className="text-sm">{selectedBooking.service_address_location}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-gray-900">No bookings found</h3>
-                  <p className="text-gray-600 text-lg">
-                    {selectedStatus === "all"
-                      ? "You don't have any bookings yet. Start exploring our services!"
-                      : `No ${selectedStatus} bookings found.`}
-                  </p>
-                  {searchTerm && (
-                    <p className="text-sm text-gray-500 mt-4">Try adjusting your search terms or filters</p>
+
+                {/* Financial Breakdown */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <IndianRupee className="h-5 w-5" />
+                      Payment Breakdown
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-gray-600">
+                        <span>Base Amount:</span>
+                        <span>₹{selectedBooking.total_booking_amount - selectedBooking.total_tax_amount}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Tax Amount:</span>
+                        <span>₹{selectedBooking.total_tax_amount}</span>
+                      </div>
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount:</span>
+                        <span>-₹{selectedBooking.total_discount_amount}</span>
+                      </div>
+                      {selectedBooking.additional_charge > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>Additional Charges:</span>
+                          <span>+₹{selectedBooking.additional_charge}</span>
+                        </div>
+                      )}
+                      <div className="border-t pt-3 flex justify-between text-lg font-bold text-gray-900">
+                        <span>Total Amount:</span>
+                        <span>₹{selectedBooking.total_booking_amount}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-4 justify-end pt-4 border-t">
+                  <Button
+                    onClick={() => window.open(
+                      `https://admin.sarvoclub.com/admin/booking/customer-invoice/${selectedBooking.id}/en`,
+                      "_blank"
+                    )}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Invoice
+                  </Button>
+                  
+                  {selectedBooking.booking_status !== "completed" && selectedBooking.booking_status !== "canceled" && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleCancelBooking(selectedBooking.id)}
+                      disabled={cancelingBookingId === selectedBooking.id}
+                      className="flex items-center gap-2"
+                    >
+                      {cancelingBookingId === selectedBooking.id ? (
+                        <>
+                          <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          Canceling...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4" />
+                          Cancel Booking
+                        </>
+                      )}
+                    </Button>
                   )}
                 </div>
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg">
-                  Browse Services
-                </Button>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-         <div className="space-y-4">
-  {filteredBookings.map((booking) => (
-    <div
-      key={booking.id}
-      className="border border-gray-300 rounded-2xl p-6 bg-gradient-to-br from-white to-gray-50 shadow-md hover:shadow-lg transition-shadow duration-300 text-sm md:text-base"
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center flex-wrap gap-2">
-        <div className="font-semibold text-gray-900">
-          Booking #{booking.readable_id}
-        </div>
-
-        <div
-          className={`text-xs font-medium px-2 py-1 rounded-full ${
-            booking.booking_status === "completed"
-              ? "bg-green-100 text-green-700"
-              : booking.booking_status === "pending"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {booking.booking_status.toUpperCase()}
-        </div>
-      </div>
-
-      {/* Details */}
-      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Service Date</div>
-          <div>{formatDate(booking.service_schedule)}</div>
-        </div>
-
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Booking Created</div>
-          <div>{formatDate(booking.created_at)}</div>
-        </div>
-
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Amount</div>
-          <div className="font-semibold text-gray-900">
-            ₹{booking.total_booking_amount}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Payment</div>
-          <div className="flex items-center gap-2">
-            {booking.is_paid === 1 ? (
-              <span className="text-green-600 font-medium">Paid</span>
-            ) : (
-              <span className="text-red-500 font-medium">Pending</span>
-            )}
-            <span className="text-xs text-gray-500">
-              ({getPaymentMethodLabel(booking.payment_method)})
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <hr className="my-4 border-gray-200" />
-
-      {/* Customer & OTP */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Customer</div>
-          <div className="font-medium">
-            {booking.customer.first_name} {booking.customer.last_name}
-          </div>
-          <div className="text-sm text-gray-600">{booking.customer.phone}</div>
-        </div>
-
-        <div>
-          <div className="text-xs text-gray-500 mb-1">OTP</div>
-          <div className="text-gray-900 font-mono font-semibold">
-            {booking.booking_otp}
-          </div>
-        </div>
-      </div>
-
-      {/* Invoice Button */}
-      <div className="mt-4 flex justify-end">
-        <button
-          onClick={() =>
-            window.open(
-              `https://admin.sarvoclub.com/admin/booking/customer-invoice/${booking.id}/en`,
-              "_blank"
-            )
-          }
-          className="text-sm text-blue-600 hover:underline font-medium"
-        >
-          Download Invoice
-        </button>
-      </div>
-    </div>
-  ))}
-</div>
-
-        )}
-      </div>
-    </div>
-    <Footer/>
-       </>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Footer />
+    </>
   )
 }
 

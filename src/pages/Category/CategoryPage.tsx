@@ -6,6 +6,7 @@ import { ArrowLeft, Grid3x3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Footer from "@/components/Footer"
 import Header from "@/components/Header"
+import { fetchCategories } from "@/helpers/categories"
 
 interface Category {
   id: string
@@ -37,41 +38,21 @@ export default function CategoriesPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchCategories(offset = 1, limit = 100) {
-      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
-      const url = `${baseUrl}/api/v1/customer/category?offset=${offset}&limit=${limit}`
-
-      const headers = {
-        "Content-Type": "application/json; charset=UTF-8",
-        zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-        "X-localization": "en",
-        guest_id: "7e223db0-9f62-11f0-bba0-779e4e64bbc8",
-      }
-
+    const loadCategories = async () => {
       try {
-        const response = await fetch(url, { headers })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`)
-        }
-
-        const data: ApiResponse = await response.json()
-
-        if (data.response_code === "default_200" && data.content?.data) {
-          const activeCategories = data.content.data.filter((category) => category.is_active === 1)
-          setCategories(activeCategories)
-        } else {
-          throw new Error("Invalid response format")
-        }
+        setLoading(true);
+        setError(null);
+        const data = await fetchCategories(1, 100);
+        const activeCategories = data.filter((category) => category.is_active === 1);
+        setCategories(activeCategories);
       } catch (err) {
-        console.error("Error fetching categories:", err)
-        setError(err instanceof Error ? err.message : "Failed to fetch categories")
+        setError(err instanceof Error ? err.message : "Failed to fetch categories");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchCategories()
+    loadCategories();
   }, [])
 
   if (loading) {

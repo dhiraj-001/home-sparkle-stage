@@ -26,6 +26,7 @@ import Footer from "@/components/Footer"
 import { useToast } from "@/hooks/use-toast"
 import { addToCart } from "@/helpers/addtocart"
 import { toggleFavorite as toggleFavoriteApi } from "@/helpers/toggleFavorite"
+import { fetchServiceDetail } from "@/helpers/services"
 
 interface ServiceVariation {
   variant_key: string
@@ -109,51 +110,22 @@ const ServiceDetail = () => {
 
   useEffect(() => {
     if (id) {
-      fetchServiceDetail(id)
+      fetchServiceData(id)
     }
   }, [id])
 
-  const fetchServiceDetail = async (serviceId: string) => {
+  const fetchServiceData = async (serviceId: string) => {
     setLoading(true)
     setError(null)
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
+      const data = await fetchServiceDetail(serviceId, authToken)
+      setService(data)
+      setIsFavorite(data.is_favorite === 1)
 
-      // Prepare headers
-      const headers = {
-        // CRITICAL: This tells the server you want a JSON response.
-        Accept: "application/json",
-        zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
-        "X-localization": "en",
-      }
-
-      // Conditionally add guest_id or Authorization token
-      if (authToken) {
-        // If the user is logged in, add the Authorization header
-        headers["Authorization"] = `Bearer ${authToken}`
-      } else {
-        // If the user is a guest, add the guest_id header
-        headers["guest_id"] = "7e223db0-9f62-11f0-bba0-779e4e64bbc8"
-      }
-
-      const response = await fetch(`${baseUrl}/api/v1/customer/service/detail/${serviceId}`, {
-        method: "GET", // Explicitly setting the method is good practice
-        headers: headers,
-      })
-
-      const data: any = await response.json()
-      console.log(data)
-      if (data.response_code === "default_200" && data.content) {
-        setService(data.content)
-        setIsFavorite(data.content.is_favorite === 1)
-
-        // Set default variation
-        if (data.content.variations_app_format?.zone_wise_variations?.length > 0) {
-          setSelectedVariation(data.content.variations_app_format.zone_wise_variations[0])
-        }
-      } else {
-        throw new Error("Failed to fetch service details")
+      // Set default variation
+      if (data.variations_app_format?.zone_wise_variations?.length > 0) {
+        setSelectedVariation(data.variations_app_format.zone_wise_variations[0])
       }
     } catch (err) {
       console.error("Error fetching service details:", err)
