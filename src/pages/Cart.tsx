@@ -11,6 +11,7 @@ import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { applyCoupon, removeCoupon, getAppliedCouponCodes } from "@/helpers/coupon"
 
+
 interface CartItem {
   id: string
   customer_id: string
@@ -77,7 +78,6 @@ interface CartResponse {
 }
 
 const CartPage: React.FC = () => {
-  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
   const [cartData, setCartData] = useState<CartResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -86,6 +86,7 @@ const CartPage: React.FC = () => {
   const [couponCode, setCouponCode] = useState("")
   const [applyingCoupon, setApplyingCoupon] = useState(false)
   const [removingCoupon, setRemovingCoupon] = useState(false)
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
   const navigate = useNavigate()
 
   const fetchCartData = async () => {

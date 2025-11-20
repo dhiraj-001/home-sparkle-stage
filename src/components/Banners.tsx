@@ -12,12 +12,13 @@ const Banner: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
 
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         const response = await fetch(
-          "https://admin.sarvoclub.com/api/v1/customer/banner?limit=10&offset=1",
+          `${baseUrl}/api/v1/customer/banner?limit=10&offset=1`,
           {
             method: "GET",
             headers: {

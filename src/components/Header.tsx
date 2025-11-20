@@ -40,6 +40,7 @@ const Header = () => {
   const [allServices, setAllServices] = useState<Service[]>([])
   const [servicesLoaded, setServicesLoaded] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -70,7 +71,6 @@ const Header = () => {
   // Load all services for client-side search
   const loadAllServices = async () => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
       const response = await fetch(`${baseUrl}/api/v1/customer/service?limit=100&offset=1`, {
         headers: {
           "Content-Type": "application/json",
@@ -143,7 +143,7 @@ const Header = () => {
 
     try {
       const response = await fetch(
-        "https://admin.sarvoclub.com/api/v1/customer/cart/list?limit=100&offset=1",
+        `${baseUrl}/api/v1/customer/cart/list?limit=100&offset=1`,
         {
           method: "GET",
           headers: {

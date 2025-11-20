@@ -336,7 +336,7 @@ const ServiceDetail = () => {
               {error || "The service you're looking for doesn't exist."}
             </p>
             <button
-              onClick={() => navigate("/services")}
+              onClick={() => navigate("/allservices")}
               className="px-8 py-3.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200 shadow-sm"
             >
               Browse All Services

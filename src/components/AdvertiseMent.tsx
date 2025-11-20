@@ -141,7 +141,7 @@ const AdvertisementList: React.FC<AdvertisementListProps> = ({ token, limit = 5,
       }
 
       const response = await fetch(
-        `https://admin.sarvoclub.com/api/v1/customer/advertisements/ads-list?limit=${limit}&offset=${page}`,
+        `${baseUrl}/api/v1/customer/advertisements/ads-list?limit=${limit}&offset=${page}`,
         {
           method: "GET",
           headers: headers,

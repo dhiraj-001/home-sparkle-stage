@@ -98,6 +98,7 @@ interface AddressForm {
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(false)
   const [cartLoading, setCartLoading] = useState(true)
@@ -161,7 +162,6 @@ export default function CheckoutPage() {
 
     try {
       setCartLoading(true)
-      const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"
       const response = await fetch(
         `${baseUrl}/api/v1/customer/cart/list?limit=100&offset=1`,
         {

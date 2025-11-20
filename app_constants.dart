@@ -5,7 +5,7 @@ class AppConstants {
 
   static const String appName = 'Sarvo Club';
   static const String appVersion = '3.3'; /// Flutter SDK : 3.25.1
-  static const String baseUrl = 'https://admin.sarvoclub.com';
+  static const String baseUrl = String.fromEnvironment('VITE_API_URL', defaultValue: 'https://admin.sarvoclub.com');
   static const bool avoidMaintenanceMode = false;
   static const LocalCachesTypeEnum cachesType = LocalCachesTypeEnum.all;
   static const String categoryUrl = '/api/v1/customer/category?limit=20';

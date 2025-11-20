@@ -3,7 +3,7 @@ import axios from "axios";
 // ========================
 // Base Config
 // ========================
-const BASE_URL = "https://admin.sarvoclub.com";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
 
 const api = axios.create({
   baseURL: BASE_URL,

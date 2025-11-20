@@ -3,7 +3,23 @@
 ## Overview
 Replace all hardcoded "https://admin.sarvoclub.com" URLs with `import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com"` to ensure the base URL is loaded from the environment variable.
 
-## Files to Edit
+## Progress Checklist
+- [ ] Update api.js: Change `const BASE_URL = "https://admin.sarvoclub.com";` to `const BASE_URL = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";`
+- [ ] Update app_constants.dart: Change `static const String baseUrl = 'https://admin.sarvoclub.com';` to use environment variable
+- [ ] Update src/pages/Cart.tsx: Add baseUrl and replace hardcoded URLs
+- [ ] Update src/pages/CheckoutPage.tsx: Add baseUrl and replace hardcoded URLs
+- [ ] Update src/pages/ProfilePage.tsx: Add baseUrl and replace hardcoded URLs
+- [ ] Update src/pages/OfferDetailPage.tsx: Add baseUrl and replace hardcoded URLs
+- [ ] Update src/pages/Category/SubcategoryService.tsx: Add baseUrl and replace hardcoded URLs
+- [ ] Update src/pages/Category/CategoryDetail.tsx: Add baseUrl and replace hardcoded URLs
+- [ ] Update src/helpers/categories.js: Replace hardcoded URL with baseUrl
+- [ ] Update src/helpers/coupon.js: Add baseUrl and replace hardcoded URLs
+- [ ] Update src/components/Footer.tsx: Define baseUrl if needed for privacy-policy link
+- [ ] Update src/components/AdvertiseMent.tsx: Add baseUrl and replace hardcoded URL
+- [ ] Update src/components/Banners.tsx: Add baseUrl and replace hardcoded URL
+- [ ] Update src/components/Header.tsx: Add baseUrl and replace hardcoded URLs
+
+## Files to Edit (Detailed)
 
 ### 1. api.js
 - Change `const BASE_URL = "https://admin.sarvoclub.com";` to `const BASE_URL = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";`
