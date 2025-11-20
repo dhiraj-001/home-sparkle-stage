@@ -121,9 +121,9 @@ const Header = () => {
     }
 
     const lowercaseQuery = query.toLowerCase().trim()
-    
+
     // Filter services based on search query
-    const filteredServices = allServices.filter(service => 
+    const filteredServices = allServices.filter(service =>
       service.name.toLowerCase().includes(lowercaseQuery) ||
       service.short_description.toLowerCase().includes(lowercaseQuery) ||
       service.category.name.toLowerCase().includes(lowercaseQuery) ||
@@ -249,25 +249,24 @@ const Header = () => {
 
   return (
     <>
-      <header className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50' 
-          : 'bg-white border-b border-gray-100'
-      }`}>
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled
+        ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50'
+        : 'bg-white border-b border-gray-100'
+        }`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 shrink-0 group">
               <div className="relative">
-                <img 
-                  src={logo || "/placeholder.svg"} 
-                  alt="SarvoClub" 
-                  className="w-8 h-8 lg:w-10 lg:h-10 object-contain rounded-lg transition-transform duration-300 group-hover:scale-110" 
+                <img
+                  src={logo || "/placeholder.svg"}
+                  alt="SarvoClub"
+                  className="w-8 h-8 lg:w-10 lg:h-10 object-contain rounded-lg transition-transform duration-300 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg" />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-xl lg:text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="font-bold text-xl lg:text-2xl bg-gradient-to-r from-blue-600 to-green-700 bg-clip-text text-transparent">
                   SarvoClub
                 </span>
                 <span className="text-xs text-gray-500 hidden lg:block">Premium Services</span>
@@ -276,33 +275,29 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-8 flex-1 max-w-2xl justify-center">
-              <Link 
-                to="/allservices" 
-                className={`relative font-medium transition-all duration-300 group ${
-                  isActiveLink('/allservices') 
-                    ? 'text-blue-600 font-semibold' 
-                    : 'text-gray-700 hover:text-blue-600'
-                }`}
+              <Link
+                to="/allservices"
+                className={`relative font-medium transition-all duration-300 group ${isActiveLink('/allservices')
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-700 hover:text-blue-600'
+                  }`}
               >
                 Services
-                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${
-                  isActiveLink('/allservices') ? 'w-full' : ''
-                }`} />
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActiveLink('/allservices') ? 'w-full' : ''
+                  }`} />
               </Link>
-              <Link 
-                to="/categories" 
-                className={`relative font-medium transition-all duration-300 group ${
-                  isActiveLink('/categories') 
-                    ? 'text-blue-600 font-semibold' 
-                    : 'text-gray-700 hover:text-blue-600'
-                }`}
+              <Link
+                to="/categories"
+                className={`relative font-medium transition-all duration-300 group ${isActiveLink('/categories')
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-700 hover:text-blue-600'
+                  }`}
               >
                 Categories
-                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${
-                  isActiveLink('/categories') ? 'w-full' : ''
-                }`} />
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full ${isActiveLink('/categories') ? 'w-full' : ''
+                  }`} />
               </Link>
-              <Link 
+              <Link
                 to="/#trending"
                 className={`relative font-medium transition-all duration-300 group text-gray-700 hover:text-blue-600`}
                 onClick={(e) => {
@@ -423,8 +418,8 @@ const Header = () => {
             {/* Right Section: Actions */}
             <div className="flex items-center gap-3 lg:gap-4">
               {/* Cart */}
-              <Link 
-                to="/cart" 
+              <Link
+                to="/cart"
                 className="relative p-2.5 bg-gray-50 rounded-xl hover:bg-blue-50 transition-all duration-300 group"
                 aria-label="Cart"
               >
@@ -437,9 +432,9 @@ const Header = () => {
               </Link>
 
               {/* Favorites */}
-              <Link 
-                to="/favorites" 
-                className="relative p-2.5 bg-gray-50 rounded-xl hover:bg-pink-50 transition-all duration-300 group"
+              <Link
+                to="/favorites"
+                className="relative p-2.5 bg-gray-50 rounded-xl hover:bg-pink-50 transition-all duration-300 group hidden lg:block"
                 aria-label="Favorites"
               >
                 <Heart className="w-5 h-5 text-gray-600 group-hover:text-pink-600 transition-colors" />
@@ -451,100 +446,98 @@ const Header = () => {
               </Link>
 
               {/* Profile */}
-              <Link 
-                to="/profile" 
-                className="p-2.5 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 group shadow-lg hover:shadow-xl"
+              <Link
+                to="/profile"
+                className="p-2.5 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl hover:from-blue-600 hover:to-green-600 transition-all duration-300 group shadow-lg hover:shadow-xl"
                 aria-label="Profile"
               >
                 <User className="w-5 h-5 text-white" />
               </Link>
 
               {/* Mobile Menu Button */}
+              {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="lg:hidden p-2.5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                 aria-label="Menu"
               >
-                <Menu className="w-5 h-5 text-gray-600" />
+                {isMobileMenuOpen ? (
+                  <X className="w-5 h-5 text-gray-600 transition-transform duration-300 rotate-90" />
+                ) : (
+                  <Menu className="w-5 h-5 text-gray-600 transition-transform duration-300" />
+                )}
               </button>
+
             </div>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-200 shadow-lg">
-            <div className="container mx-auto px-4 py-4">
-              {/* Mobile Search */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search services..."
-                  value={searchQuery}
-                  onChange={handleSearchInputChange}
-                  className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+        <div
+          className={`lg:hidden bg-white border-t border-gray-200 shadow-lg transition-all duration-300 overflow-hidden ${
+            isMobileMenuOpen
+              ? 'max-h-96 opacity-100'
+              : 'max-h-0 opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="container mx-auto px-4 py-4">
+            <nav className="flex flex-col space-y-3">
+              <Link
+                to="/favorites"
+                className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${isActiveLink('/favorites')
+                  ? 'bg-pink-50 text-pink-600 border border-pink-200'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Favorites
+              </Link>
 
-              {/* Mobile Navigation */}
-              <nav className="flex flex-col space-y-3">
-                <Link 
-                  to="/allservices" 
-                  className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
-                    isActiveLink('/allservices') 
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200' 
-                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              <Link
+                to="/allservices"
+                className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${isActiveLink('/allservices')
+                  ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                   }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Services
-                </Link>
-                <Link 
-                  to="/categories" 
-                  className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
-                    isActiveLink('/categories') 
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200' 
-                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Services
+              </Link>
+              <Link
+                to="/categories"
+                className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${isActiveLink('/categories')
+                  ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                   }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Categories
-                </Link>
-                <Link 
-                  to="/#trending" 
-                  className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 bg-gray-50 text-gray-700 hover:bg-gray-100`}
-                  onClick={(e) => {
-                    if (location.pathname === "/") {
-                      e.preventDefault();
-                      document.getElementById("trending")?.scrollIntoView({ behavior: "smooth" });
-                    }
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  Trending
-                </Link>
-              </nav>
-            </div>
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Categories
+              </Link>
+              <Link
+                to="/#trending"
+                className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 bg-gray-50 text-gray-700 hover:bg-gray-100`}
+                onClick={(e) => {
+                  if (location.pathname === "/") {
+                    e.preventDefault();
+                    document.getElementById("trending")?.scrollIntoView({ behavior: "smooth" });
+                  }
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Trending
+              </Link>
+            </nav>
           </div>
-        )}
+        </div>
       </header>
 
       {/* Overlay for mobile menu */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      <div
+        className={`fixed inset-0 bg-black/20 z-40 lg:hidden transition-opacity duration-300 ${
+          isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
     </>
   )
 }

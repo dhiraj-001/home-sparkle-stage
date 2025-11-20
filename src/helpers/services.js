@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Service-related API helper functions
 
 /**
@@ -9,6 +10,11 @@
 export async function fetchAllServices(page = 1, authToken = null) {
   const baseUrl = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
 
+=======
+const BASE_URL = import.meta.env.VITE_API_URL || "https://admin.sarvoclub.com";
+
+const getHeaders = (token) => {
+>>>>>>> 89157855edb7361a392231d95d8427c4893a3bd1
   const headers = {
     "Content-Type": "application/json",
     zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
@@ -16,13 +22,19 @@ export async function fetchAllServices(page = 1, authToken = null) {
     "Accept-Encoding": "gzip, deflate, br",
   };
 
+<<<<<<< HEAD
   // Add authorization if token provided
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
+=======
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+>>>>>>> 89157855edb7361a392231d95d8427c4893a3bd1
   } else {
     headers["guest_id"] = "7e223db0-9f62-11f0-bba0-779e4e64bbc8";
   }
 
+<<<<<<< HEAD
   try {
     const response = await fetch(`${baseUrl}/api/v1/customer/service?limit=20&offset=${page}`, {
       headers,
@@ -126,6 +138,18 @@ export async function fetchSubcategoryServices(subcategoryId, page = 1, authToke
       {
         method: "GET",
         headers,
+=======
+  return headers;
+};
+
+export const fetchAllServices = async (limit = 20, offset = 1, token = null) => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/api/v1/customer/service?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+        headers: getHeaders(token),
+>>>>>>> 89157855edb7361a392231d95d8427c4893a3bd1
       }
     );
 
@@ -137,6 +161,7 @@ export async function fetchSubcategoryServices(subcategoryId, page = 1, authToke
 
     if (data.response_code === "default_200") {
       return {
+<<<<<<< HEAD
         success: true,
         services: data.content.data,
         currentPage: data.content.current_page,
@@ -148,10 +173,18 @@ export async function fetchSubcategoryServices(subcategoryId, page = 1, authToke
           image_full_path: data.content.data[0].category.image_full_path,
           description: data.content.data[0].category.name + " Services"
         } : null,
+=======
+        data: data.content.data,
+        current_page: data.content.current_page,
+        last_page: data.content.last_page,
+        total: data.content.total,
+        per_page: data.content.per_page,
+>>>>>>> 89157855edb7361a392231d95d8427c4893a3bd1
       };
     } else {
       throw new Error(data.message || "Failed to fetch services");
     }
+<<<<<<< HEAD
   } catch (err) {
     console.error("Error fetching subcategory services:", err);
     return {
@@ -160,3 +193,49 @@ export async function fetchSubcategoryServices(subcategoryId, page = 1, authToke
     };
   }
 }
+=======
+  } catch (error) {
+    console.error("Error fetching services:", error);
+    throw error;
+  }
+};
+
+export const fetchServiceDetail = async (serviceId, token = null) => {
+  try {
+    const headers = {
+      Accept: "application/json",
+      zoneId: "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+      "X-localization": "en",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      headers["guest_id"] = "7e223db0-9f62-11f0-bba0-779e4e64bbc8";
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/api/v1/customer/service/detail/${serviceId}`,
+      {
+        method: "GET",
+        headers: headers,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.response_code === "default_200") {
+      return data.content;
+    } else {
+      throw new Error(data.message || "Failed to fetch service details");
+    }
+  } catch (error) {
+    console.error("Error fetching service details:", error);
+    throw error;
+  }
+};
+>>>>>>> 89157855edb7361a392231d95d8427c4893a3bd1

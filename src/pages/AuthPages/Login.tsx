@@ -33,27 +33,154 @@ const countryCodes = [
 interface LoginFormData {
   email_or_phone: string
   password: string
+  otp: string
 }
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<LoginFormData>({
     email_or_phone: "",
     password: "",
+    otp: ""
   })
-  const [loginType, setLoginType] = useState<"email" | "phone">("phone")
+  const [loginType, setLoginType] = useState<"email" | "phone" | "otp">("otp")
   const [selectedCountryCode, setSelectedCountryCode] = useState("+91")
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [otpSent, setOtpSent] = useState(false)
+  const [countdown, setCountdown] = useState(0)
   const navigate = useNavigate()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle OTP request
+  const handleSendOtp = async () => {
+    if (!formData.email_or_phone) {
+      setError("Please enter your phone number")
+      return
+    }
+
+    setError(null)
+    setOtpLoading(true)
+
+    try {
+      const formattedPhone = `${selectedCountryCode}${formData.email_or_phone}`
+      
+      const payload = {
+        identity: formattedPhone,
+        identity_type: "phone",
+        check_user: true
+      }
+
+      console.log("Sending OTP request with payload:", payload)
+
+      const res = await axios.post(`${BASE_URL}/api/v1/user/verification/send-otp`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-localization": "en",
+          "zoneId": "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+        },
+      })
+
+      console.log("OTP response:", res.data)
+
+      if (res.data.response_code.includes("200")) {
+        setOtpSent(true)
+        setSuccessMessage("OTP sent successfully to your phone!")
+        setCountdown(60) // Start 60 second countdown
+        startCountdown()
+      } else {
+        setError(res.data.message || "Failed to send OTP")
+      }
+    } catch (err: any) {
+      console.error("OTP send error:", err)
+      if (err.response?.data) {
+        setError(err.response.data.message || "Failed to send OTP. Please try again.")
+      } else if (err.request) {
+        setError("Network error. Please check your connection.")
+      } else {
+        setError("An unexpected error occurred.")
+      }
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  // Handle OTP verification and login
+  const handleOtpLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      const formattedPhone = `${selectedCountryCode}${formData.email_or_phone}`
+      
+      const payload = {
+        phone: formattedPhone,
+        otp: formData.otp
+      }
+
+      console.log("Verifying OTP with payload:", payload)
+
+      const res = await axios.post(`${BASE_URL}/api/v1/user/verification/login-otp-verify`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-localization": "en",
+          "zoneId": "a02c55ff-cb84-4bbb-bf91-5300d1766a29",
+        },
+      })
+
+      console.log("OTP verification response:", res.data)
+
+      if (res.data.content.token) {
+        setSuccessMessage("Login successful!")
+        
+        // Store token
+        const token = res.data.content.token
+
+        // Store token in localStorage
+        localStorage.setItem("demand_token", token)
+        localStorage.setItem("user_data", JSON.stringify({
+          email_or_phone: formattedPhone,
+          login_time: new Date().toISOString(),
+          login_method: "otp"
+        }))
+
+        // Set auth token for API calls
+        setAuthToken(token)
+
+        // Store token in axios default headers for future requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+        // Redirect to home page
+        setTimeout(() => {
+          navigate("/")
+        }, 1500)
+
+      } else {
+        setError(res.data.message || "OTP verification failed")
+      }
+    } catch (err: any) {
+      console.error("OTP verification error:", err)
+      if (err.response?.data) {
+        setError(err.response.data.message || "Invalid OTP. Please try again.")
+      } else if (err.request) {
+        setError("Network error. Please check your connection.")
+      } else {
+        setError("An unexpected error occurred.")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Handle password login
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setSuccessMessage(null)
@@ -66,7 +193,7 @@ const Login: React.FC = () => {
         formattedIdentity = `${selectedCountryCode}${formData.email_or_phone}`
       }
 
-      // Generate a unique guest_id (you can use a library like uuid if needed)
+      // Generate a unique guest_id
       const guest_id = `a64dcd08-e47b-49d0-a785-92ce8ac3f6a6`
 
       const payload = {
@@ -100,7 +227,8 @@ const Login: React.FC = () => {
         localStorage.setItem("user_data", JSON.stringify({
           email_or_phone: formattedIdentity,
           is_active: is_active,
-          login_time: new Date().toISOString()
+          login_time: new Date().toISOString(),
+          login_method: "password"
         }))
 
         // Set auth token for API calls
@@ -109,7 +237,7 @@ const Login: React.FC = () => {
         // Store token in axios default headers for future requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
-        // Redirect to home page or intended destination
+        // Redirect to home page
         setTimeout(() => {
           navigate("/")
         }, 1500)
@@ -138,11 +266,37 @@ const Login: React.FC = () => {
 
   const selectedCountry = countryCodes.find(country => country.code === selectedCountryCode)
 
+  // Countdown timer for OTP resend
+  const startCountdown = () => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  const handleResendOtp = () => {
+    if (countdown === 0) {
+      handleSendOtp()
+    }
+  }
+
+  // Reset OTP state when changing login type
+  useEffect(() => {
+    if (loginType !== "otp") {
+      setOtpSent(false)
+      setCountdown(0)
+    }
+  }, [loginType])
+
   // Check if user is already logged in
   useEffect(() => {
     const token = localStorage.getItem("demand_token")
     if (token) {
-      // User is already logged in, redirect to home
       navigate("/profile")
     }
   }, [navigate])
@@ -172,10 +326,21 @@ const Login: React.FC = () => {
               </Alert>
             )}
 
-            {/* Login Type Selection */}
-            <div className="space-y-2">
+            {/* ---------  if PASSWORD LOGIN is required. just uncomment these lines  ----------- */}
+            {/* <div className="space-y-2">
               <Label className="text-sm font-medium">Login with</Label>
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-wrap">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="loginType"
+                    value="otp"
+                    checked={loginType === "otp"}
+                    onChange={() => setLoginType("otp")}
+                    className="text-primary"
+                  />
+                  OTP
+                </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
@@ -199,15 +364,15 @@ const Login: React.FC = () => {
                   Phone
                 </label>
               </div>
-            </div>
+            </div> */}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={loginType === "otp" ? handleOtpLogin : handlePasswordLogin} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email_or_phone" className="text-sm font-medium">
                   {loginType === "email" ? "Email Address" : "Phone Number"}
                 </Label>
                 
-                {loginType === "phone" ? (
+                {(loginType === "phone" || loginType === "otp") ? (
                   <div className="flex">
                     {/* Country Code Dropdown */}
                     <div className="relative">
@@ -266,50 +431,120 @@ const Login: React.FC = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </Label>
-                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="h-11 pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
+              {loginType === "otp" ? (
+                <>
+                  {!otpSent ? (
+                    <Button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={otpLoading || !formData.email_or_phone}
+                      className="w-full h-11 text-base font-medium"
+                    >
+                      {otpLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending OTP...
+                        </>
+                      ) : (
+                        "Send OTP"
+                      )}
+                    </Button>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="otp" className="text-sm font-medium">
+                          Enter OTP
+                        </Label>
+                        <Input
+                          id="otp"
+                          type="text"
+                          name="otp"
+                          placeholder="Enter 4-digit OTP"
+                          value={formData.otp}
+                          onChange={handleChange}
+                          required
+                          maxLength={6}
+                          className="h-11 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-center text-lg tracking-widest"
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={countdown > 0}
+                          variant="outline"
+                          className="flex-1 h-11"
+                        >
+                          {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
+                        </Button>
+                        
+                        <Button
+                          type="submit"
+                          className="flex-1 h-11 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200"
+                          disabled={loading || !formData.otp}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Verifying...
+                            </>
+                          ) : (
+                            "Verify OTP"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="text-sm font-medium">
+                        Password
+                      </Label>
+                      <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        placeholder="Enter your password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        className="h-11 pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-              <Button
-                type="submit"
-                className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
+                  <Button
+                    type="submit"
+                    className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </Button>
+                </>
+              )}
             </form>
 
             <div className="text-center pt-4 border-t">

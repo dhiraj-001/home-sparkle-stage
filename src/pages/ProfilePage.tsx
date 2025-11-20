@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import {fetchCoupons} from "@/helpers/coupon"
+import { deleteUserAccount, fetchUserInfo, logoutUser } from "@/helpers/profile";
 
 interface User {
   id: string;
@@ -96,37 +97,19 @@ const ProfilePage = () => {
     }
 
     try {
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/info`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.response_code === "default_200" && data.content) {
-          setUser(data.content);
-          // Update form data with current user data
-          setFormData({
-            first_name: data.content.first_name || "",
-            last_name: data.content.last_name || "",
-            email: data.content.email || "",
-            phone: data.content.phone || "",
-            identification_type: "nid",
-            identification_number: data.content.identification_number || "",
-            date_of_birth: data.content.date_of_birth || "",
-            gender: data.content.gender || "male",
-          });
-        } else {
-          throw new Error("Invalid API response");
-        }
-      } else {
-        localStorage.removeItem("demand_token");
-        navigate("/login");
-      }
+      const userData = await fetchUserInfo(token);
+      setUser(userData);
+      // Update form data with current user data
+      setFormData({
+        first_name: userData.first_name || "",
+        last_name: userData.last_name || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        identification_type: "nid",
+        identification_number: userData.identification_number || "",
+        date_of_birth: userData.date_of_birth || "",
+        gender: userData.gender || "male",
+      });
     } catch (error) {
       console.error("Failed to fetch user data:", error);
       localStorage.removeItem("demand_token");
@@ -150,22 +133,9 @@ const ProfilePage = () => {
     }
 
     try {
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/auth/logout`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        localStorage.removeItem("demand_token");
-        navigate("/");
-      } else {
-        console.error("Logout failed");
-      }
+      await logoutUser(token);
+      localStorage.removeItem("demand_token");
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -182,33 +152,16 @@ const ProfilePage = () => {
     setDeleteError(null);
 
     try {
-      const response = await fetch(
-        `${baseUrl}/api/v1/customer/remove-account`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        localStorage.removeItem("demand_token");
-        navigate("/");
-      } else {
-        const data = await response.json();
-        setDeleteError(
-          data.message || "Failed to delete account. Please try again."
-        );
-      }
+      await deleteUserAccount(token);
+      localStorage.removeItem("demand_token");
+      navigate("/");
     } catch (error) {
       console.error("Delete account failed:", error);
-      setDeleteError("An error occurred. Please try again later.");
+      setDeleteError(error.message || "An error occurred. Please try again later.");
     } finally {
       setDeleteLoading(false);
     }
   };
-
   const handleEditProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("demand_token");
@@ -1083,53 +1036,45 @@ const ProfilePage = () => {
         </div>
 
         {/* Delete Account Section */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mt-8 border-2 border-red-100">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg
-                className="w-6 h-6 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Danger Zone
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Once you delete your account, there is no going back. Please be
-                certain.
-              </p>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="bg-white border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center gap-2 group"
-              >
-                <svg
-                  className="w-5 h-5 group-hover:scale-110 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-                Delete My Account
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="bg-white rounded-3xl shadow-2xl p-8 mt-8 border-2 border-red-100">
+  <div className="flex items-start gap-4 mb-6">
+    <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+    <div className="flex-1">
+      <h3 className="text-2xl font-bold text-gray-900 mb-2">Danger Zone</h3>
+      <p className="text-gray-600 mb-6">
+        Account management options. Delete your account permanently or get help from our support team.
+      </p>
+      
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Help & Support - Primary Action */}
+        <button
+          onClick={() => navigate("/helpsupport")}
+          className="bg-blue-600 text-white hover:bg-blue-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center gap-2 group flex-1 justify-center shadow-lg shadow-blue-600/25"
+        >
+          <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Get Help
+        </button>
+
+        {/* Delete Account - Secondary/Danger Action */}
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="bg-white border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center gap-2 group flex-1 justify-center"
+        >
+          <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete Account
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
 
       {/* Delete Confirmation Modal */}
